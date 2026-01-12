@@ -11,8 +11,7 @@ import type {
   CountTokensParameters,
   EmbedContentResponse,
   EmbedContentParameters,
-} from '@google/genai';
-import { GoogleGenAI } from '@google/genai';
+} from './contentGeneratorTypes.js';
 import { createCodeAssistContentGenerator } from '../code_assist/codeAssist.js';
 import type { Config } from '../config/config.js';
 import { loadApiKey } from './apiKeyCredentialStorage.js';
@@ -24,7 +23,10 @@ import { FakeContentGenerator } from './fakeContentGenerator.js';
 import { parseCustomHeaders } from '../utils/customHeaderUtils.js';
 import { RecordingContentGenerator } from './recordingContentGenerator.js';
 import { getVersion, resolveModel } from '../../index.js';
-import { createOpenAiCompatibleContentGenerator } from './openAiContentGenerator.js';
+import { GoogleContentGeneratorAdapter } from './providers/googleContentGenerator.js';
+import { OpenAIContentGenerator } from './providers/openaiContentGenerator.js';
+import { OpenRouterContentGenerator } from './providers/openrouterContentGenerator.js';
+import { OllamaContentGenerator } from './providers/ollamaContentGenerator.js';
 
 /**
  * Interface abstracting the core functionalities for generating content and counting tokens.
@@ -51,11 +53,14 @@ export enum AuthType {
   LOGIN_WITH_GOOGLE = 'oauth-personal',
   USE_GEMINI = 'gemini-api-key',
   USE_VERTEX_AI = 'vertex-ai',
+  OPENAI = 'openai-api-key',
+  OPENROUTER = 'openrouter-api-key',
+  OLLAMA = 'ollama',
+  LEGACY_CLOUD_SHELL = 'cloud-shell',
+  COMPUTE_ADC = 'compute-default-credentials',
   USE_OPENAI = 'openai-api-key',
   USE_OPENROUTER = 'openrouter-api-key',
   USE_OLLAMA = 'ollama',
-  LEGACY_CLOUD_SHELL = 'cloud-shell',
-  COMPUTE_ADC = 'compute-default-credentials',
 }
 
 export type ContentGeneratorConfig = {
@@ -64,6 +69,7 @@ export type ContentGeneratorConfig = {
   vertexai?: boolean;
   authType?: AuthType;
   proxy?: string;
+  baseUrl?: string;
 };
 
 export async function createContentGeneratorConfig(
@@ -81,6 +87,16 @@ export async function createContentGeneratorConfig(
     process.env['GOOGLE_CLOUD_PROJECT_ID'] ||
     undefined;
   const googleCloudLocation = process.env['GOOGLE_CLOUD_LOCATION'] || undefined;
+  const openaiApiKey = process.env['OPENAI_API_KEY'] || undefined;
+  const openaiBaseUrl =
+    process.env['OPENAI_BASE_URL'] || 'https://api.openai.com/v1';
+  const openrouterApiKey = process.env['OPENROUTER_API_KEY'] || undefined;
+  const openrouterBaseUrl =
+    process.env['OPENROUTER_BASE_URL'] || 'https://openrouter.ai/api/v1';
+  const ollamaBaseUrl =
+    process.env['OLLAMA_BASE_URL'] ||
+    process.env['OLLAMA_HOST'] ||
+    'http://localhost:11434';
 
   const contentGeneratorConfig: ContentGeneratorConfig = {
     authType,
@@ -92,6 +108,23 @@ export async function createContentGeneratorConfig(
     authType === AuthType.LOGIN_WITH_GOOGLE ||
     authType === AuthType.COMPUTE_ADC
   ) {
+    return contentGeneratorConfig;
+  }
+
+  if (authType === AuthType.USE_OPENAI && openaiApiKey) {
+    contentGeneratorConfig.apiKey = openaiApiKey;
+    contentGeneratorConfig.baseUrl = openaiBaseUrl;
+    return contentGeneratorConfig;
+  }
+
+  if (authType === AuthType.USE_OPENROUTER && openrouterApiKey) {
+    contentGeneratorConfig.apiKey = openrouterApiKey;
+    contentGeneratorConfig.baseUrl = openrouterBaseUrl;
+    return contentGeneratorConfig;
+  }
+
+  if (authType === AuthType.USE_OLLAMA) {
+    contentGeneratorConfig.baseUrl = ollamaBaseUrl;
     return contentGeneratorConfig;
   }
 
@@ -198,12 +231,35 @@ export async function createContentGenerator(
       }
       const httpOptions = { headers };
 
-      const googleGenAI = new GoogleGenAI({
+      const googleAdapter = GoogleContentGeneratorAdapter.create({
         apiKey: config.apiKey === '' ? undefined : config.apiKey,
         vertexai: config.vertexai,
         httpOptions,
       });
-      return new LoggingContentGenerator(googleGenAI.models, gcConfig);
+      return new LoggingContentGenerator(googleAdapter, gcConfig);
+    }
+
+    if (config.authType === AuthType.USE_OPENAI) {
+      const openaiAdapter = new OpenAIContentGenerator({
+        apiKey: config.apiKey,
+        baseUrl: config.baseUrl,
+      });
+      return new LoggingContentGenerator(openaiAdapter, gcConfig);
+    }
+
+    if (config.authType === AuthType.USE_OPENROUTER) {
+      const openrouterAdapter = new OpenRouterContentGenerator({
+        apiKey: config.apiKey,
+        baseUrl: config.baseUrl,
+      });
+      return new LoggingContentGenerator(openrouterAdapter, gcConfig);
+    }
+
+    if (config.authType === AuthType.USE_OLLAMA) {
+      const ollamaAdapter = new OllamaContentGenerator({
+        baseUrl: config.baseUrl,
+      });
+      return new LoggingContentGenerator(ollamaAdapter, gcConfig);
     }
     if (
       config.authType === AuthType.USE_OPENAI ||

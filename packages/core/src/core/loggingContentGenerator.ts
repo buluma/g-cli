@@ -15,7 +15,7 @@ import type {
   GenerateContentParameters,
   GenerateContentResponseUsageMetadata,
   GenerateContentResponse,
-} from '@google/genai';
+} from './contentGeneratorTypes.js';
 import type { ServerDetails } from '../telemetry/types.js';
 import {
   ApiRequestEvent,
@@ -29,6 +29,7 @@ import {
   logApiResponse,
 } from '../telemetry/loggers.js';
 import type { ContentGenerator } from './contentGenerator.js';
+import { AuthType } from './contentGenerator.js';
 import { CodeAssistServer } from '../code_assist/server.js';
 import { toContents } from '../code_assist/converter.js';
 import { isStructuredError } from '../utils/quotaErrorDetection.js';
@@ -99,6 +100,34 @@ export class LoggingContentGenerator implements ContentGenerator {
         return { address: `${location}-aiplatform.googleapis.com`, port: 443 };
       } else {
         return { address: 'unknown', port: 0 };
+      }
+    }
+
+    const baseUrl = genConfig?.baseUrl;
+    const authType = genConfig?.authType;
+
+    if (
+      authType === AuthType.USE_OPENAI ||
+      authType === AuthType.USE_OPENROUTER ||
+      authType === AuthType.USE_OLLAMA
+    ) {
+      const fallback = { address: 'unknown', port: 0 };
+      if (!baseUrl) {
+        return fallback;
+      }
+      try {
+        const url = new URL(baseUrl);
+        return {
+          address: url.hostname,
+          port:
+            url.port !== ''
+              ? parseInt(url.port, 10)
+              : url.protocol === 'https:'
+                ? 443
+                : 80,
+        };
+      } catch {
+        return fallback;
       }
     }
 

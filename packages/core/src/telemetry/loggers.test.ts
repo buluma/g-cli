@@ -254,6 +254,82 @@ describe('loggers', () => {
         },
       });
     });
+
+    it('should flag non-Google api key auth without vertex', () => {
+      const mockConfig = {
+        getSessionId: () => 'test-session-id',
+        getModel: () => 'test-model',
+        getEmbeddingModel: () => 'test-embedding-model',
+        getSandbox: () => true,
+        getCoreTools: () => ['ls', 'read-file'],
+        getApprovalMode: () => 'default',
+        getContentGeneratorConfig: () => ({
+          model: 'test-model',
+          apiKey: 'test-api-key',
+          authType: 'openai' as AuthType,
+        }),
+        getTelemetryEnabled: () => true,
+        getUsageStatisticsEnabled: () => true,
+        getTelemetryLogPromptsEnabled: () => true,
+        getFileFilteringRespectGitIgnore: () => true,
+        getFileFilteringAllowBuildArtifacts: () => false,
+        getDebugMode: () => true,
+        getMcpServers: () => {
+          throw new Error('Should not call');
+        },
+        getQuestion: () => 'test-question',
+        getTargetDir: () => 'target-dir',
+        getProxy: () => 'http://test.proxy.com:8080',
+        getOutputFormat: () => OutputFormat.JSON,
+        getExtensions: () =>
+          [
+            { name: 'ext-one', id: 'id-one' },
+            { name: 'ext-two', id: 'id-two' },
+          ] as GeminiCLIExtension[],
+        getMcpClientManager: () => ({
+          getMcpServers: () => ({
+            'test-server': {
+              command: 'test-command',
+            },
+          }),
+        }),
+        isInteractive: () => false,
+      } as unknown as Config;
+
+      const startSessionEvent = new StartSessionEvent(mockConfig);
+      logCliConfiguration(mockConfig, startSessionEvent);
+
+      expect(mockLogger.emit).toHaveBeenCalledWith({
+        body: 'CLI configuration loaded.',
+        attributes: {
+          'session.id': 'test-session-id',
+          'user.email': 'test-user@example.com',
+          'installation.id': 'test-installation-id',
+          'event.name': EVENT_CLI_CONFIG,
+          'event.timestamp': '2025-01-01T00:00:00.000Z',
+          interactive: false,
+          model: 'test-model',
+          embedding_model: 'test-embedding-model',
+          sandbox_enabled: true,
+          core_tools_enabled: 'ls,read-file',
+          approval_mode: 'default',
+          api_key_enabled: true,
+          vertex_ai_enabled: false,
+          log_user_prompts_enabled: true,
+          file_filtering_respect_git_ignore: true,
+          debug_mode: true,
+          mcp_servers: 'test-server',
+          mcp_servers_count: 1,
+          mcp_tools: undefined,
+          mcp_tools_count: undefined,
+          output_format: 'json',
+          extension_ids: 'id-one,id-two',
+          extensions_count: 2,
+          extensions: 'ext-one,ext-two',
+          auth_type: 'openai',
+        },
+      });
+    });
   });
 
   describe('logUserPrompt', () => {
@@ -500,6 +576,58 @@ describe('loggers', () => {
         'event.name': EVENT_API_RESPONSE,
         'event.timestamp': '2025-01-01T00:00:00.000Z',
       });
+    });
+
+    it('should map non-Google auth types to GenAI providers', () => {
+      const usageData: GenerateContentResponseUsageMetadata = {
+        promptTokenCount: 10,
+        candidatesTokenCount: 20,
+      };
+      const event = new ApiResponseEvent(
+        'test-model',
+        120,
+        {
+          prompt_id: 'prompt-id-2',
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: 'Hello' }],
+            },
+          ],
+          generate_content_config: {},
+        },
+        {
+          response_id: '',
+          candidates: [
+            {
+              content: {
+                role: 'model',
+                parts: [{ text: 'candidate 2' }],
+              },
+              finishReason: FinishReason.STOP,
+            },
+          ],
+        },
+        'openai',
+        usageData,
+      );
+
+      logApiResponse(mockConfig, event);
+
+      expect(mockMetrics.recordApiResponseMetrics).toHaveBeenCalledWith(
+        mockConfig,
+        120,
+        {
+          model: 'test-model',
+          status_code: 200,
+          genAiAttributes: {
+            'gen_ai.operation.name': 'generate_content',
+            'gen_ai.provider.name': 'openai',
+            'gen_ai.request.model': 'test-model',
+            'gen_ai.response.model': 'test-model',
+          },
+        },
+      );
     });
   });
 

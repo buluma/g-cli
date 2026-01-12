@@ -193,9 +193,8 @@ describe('validateNonInterActiveAuth', () => {
     expect(debugLoggerErrorSpy).not.toHaveBeenCalled();
   });
 
-  it('uses USE_OPENAI if OPENAI_API_KEY is set', async () => {
-    mockedIsOpenAiCompatibleAvailable.mockReturnValue(true);
-    process.env['OPENAI_API_KEY'] = 'openai-key';
+  it('uses OPENAI if OPENAI_API_KEY is set', async () => {
+    process.env['OPENAI_API_KEY'] = 'fake-key';
     const nonInteractiveConfig = createLocalMockConfig({});
     await validateNonInteractiveAuth(
       undefined,
@@ -207,9 +206,8 @@ describe('validateNonInterActiveAuth', () => {
     expect(debugLoggerErrorSpy).not.toHaveBeenCalled();
   });
 
-  it('uses USE_OPENROUTER if OPENROUTER_API_KEY is set', async () => {
-    mockedIsOpenAiCompatibleAvailable.mockReturnValue(true);
-    process.env['OPENROUTER_API_KEY'] = 'openrouter-key';
+  it('uses OPENROUTER if OPENROUTER_API_KEY is set', async () => {
+    process.env['OPENROUTER_API_KEY'] = 'fake-key';
     const nonInteractiveConfig = createLocalMockConfig({});
     await validateNonInteractiveAuth(
       undefined,
@@ -221,8 +219,7 @@ describe('validateNonInterActiveAuth', () => {
     expect(debugLoggerErrorSpy).not.toHaveBeenCalled();
   });
 
-  it('uses USE_OLLAMA if OLLAMA_HOST is set', async () => {
-    mockedIsOpenAiCompatibleAvailable.mockReturnValue(true);
+  it('uses OLLAMA if OLLAMA_HOST is set', async () => {
     process.env['OLLAMA_HOST'] = 'http://localhost:11434';
     const nonInteractiveConfig = createLocalMockConfig({});
     await validateNonInteractiveAuth(

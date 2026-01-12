@@ -913,10 +913,12 @@ export function getConventionAttributes(event: {
  * Maps authentication type to GenAI provider name following OpenTelemetry conventions
  */
 function getGenAiProvider(authType?: string): GenAiProviderName {
-  switch (authType) {
+  const normalizedAuthType = authType?.toLowerCase();
+  switch (normalizedAuthType) {
     case AuthType.USE_VERTEX_AI:
     case AuthType.COMPUTE_ADC:
     case AuthType.LOGIN_WITH_GOOGLE:
+    case AuthType.LEGACY_CLOUD_SHELL:
       return GenAiProviderName.GCP_VERTEX_AI;
     case AuthType.USE_OPENAI:
       return GenAiProviderName.OPENAI;
@@ -925,6 +927,13 @@ function getGenAiProvider(authType?: string): GenAiProviderName {
     case AuthType.USE_OLLAMA:
       return GenAiProviderName.OLLAMA;
     case AuthType.USE_GEMINI:
+      return GenAiProviderName.GCP_GEN_AI;
+    case 'openai':
+      return GenAiProviderName.OPENAI;
+    case 'openrouter':
+      return GenAiProviderName.OPENROUTER;
+    case 'ollama':
+      return GenAiProviderName.OLLAMA;
     default:
       return GenAiProviderName.GCP_GEN_AI;
   }

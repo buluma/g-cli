@@ -12,7 +12,7 @@ import {
   createContentGeneratorConfig,
 } from './contentGenerator.js';
 import { createCodeAssistContentGenerator } from '../code_assist/codeAssist.js';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleContentGeneratorAdapter } from './providers/googleContentGenerator.js';
 import type { Config } from '../config/config.js';
 import { LoggingContentGenerator } from './loggingContentGenerator.js';
 import { loadApiKey } from './apiKeyCredentialStorage.js';
@@ -21,7 +21,7 @@ import { RecordingContentGenerator } from './recordingContentGenerator.js';
 import { createOpenAiCompatibleContentGenerator } from './openAiContentGenerator.js';
 
 vi.mock('../code_assist/codeAssist.js');
-vi.mock('@google/genai');
+vi.mock('./providers/googleContentGenerator.js');
 vi.mock('./apiKeyCredentialStorage.js', () => ({
   loadApiKey: vi.fn(),
 }));
@@ -118,7 +118,7 @@ describe('createContentGenerator', () => {
     );
   });
 
-  it('should create a GoogleGenAI content generator', async () => {
+  it('should create a Google adapter content generator', async () => {
     const mockConfig = {
       getModel: vi.fn().mockReturnValue('gemini-pro'),
       getProxy: vi.fn().mockReturnValue(undefined),
@@ -129,10 +129,10 @@ describe('createContentGenerator', () => {
     // Set a fixed version for testing
     vi.stubEnv('CLI_VERSION', '1.2.3');
 
-    const mockGenerator = {
-      models: {},
-    } as unknown as GoogleGenAI;
-    vi.mocked(GoogleGenAI).mockImplementation(() => mockGenerator as never);
+    const mockGenerator = {} as unknown as ContentGenerator;
+    vi.mocked(GoogleContentGeneratorAdapter.create).mockReturnValue(
+      mockGenerator as never,
+    );
     const generator = await createContentGenerator(
       {
         apiKey: 'test-api-key',
@@ -140,7 +140,7 @@ describe('createContentGenerator', () => {
       },
       mockConfig,
     );
-    expect(GoogleGenAI).toHaveBeenCalledWith({
+    expect(GoogleContentGeneratorAdapter.create).toHaveBeenCalledWith({
       apiKey: 'test-api-key',
       vertexai: undefined,
       httpOptions: {
@@ -151,7 +151,7 @@ describe('createContentGenerator', () => {
       },
     });
     expect(generator).toEqual(
-      new LoggingContentGenerator(mockGenerator.models, mockConfig),
+      new LoggingContentGenerator(mockGenerator, mockConfig),
     );
   });
 
@@ -194,10 +194,10 @@ describe('createContentGenerator', () => {
       getPreviewFeatures: vi.fn().mockReturnValue(false),
     } as unknown as Config;
 
-    const mockGenerator = {
-      models: {},
-    } as unknown as GoogleGenAI;
-    vi.mocked(GoogleGenAI).mockImplementation(() => mockGenerator as never);
+    const mockGenerator = {} as unknown as ContentGenerator;
+    vi.mocked(GoogleContentGeneratorAdapter.create).mockReturnValue(
+      mockGenerator as never,
+    );
     vi.stubEnv(
       'GEMINI_CLI_CUSTOM_HEADERS',
       'X-Test-Header: test, Another: value',
@@ -211,7 +211,7 @@ describe('createContentGenerator', () => {
       mockConfig,
     );
 
-    expect(GoogleGenAI).toHaveBeenCalledWith({
+    expect(GoogleContentGeneratorAdapter.create).toHaveBeenCalledWith({
       apiKey: 'test-api-key',
       vertexai: undefined,
       httpOptions: {
@@ -222,7 +222,7 @@ describe('createContentGenerator', () => {
         }),
       },
     });
-    expect(GoogleGenAI).toHaveBeenCalledWith(
+    expect(GoogleContentGeneratorAdapter.create).toHaveBeenCalledWith(
       expect.not.objectContaining({
         httpOptions: {
           headers: expect.objectContaining({
@@ -241,10 +241,10 @@ describe('createContentGenerator', () => {
       getPreviewFeatures: vi.fn().mockReturnValue(false),
     } as unknown as Config;
 
-    const mockGenerator = {
-      models: {},
-    } as unknown as GoogleGenAI;
-    vi.mocked(GoogleGenAI).mockImplementation(() => mockGenerator as never);
+    const mockGenerator = {} as unknown as ContentGenerator;
+    vi.mocked(GoogleContentGeneratorAdapter.create).mockReturnValue(
+      mockGenerator as never,
+    );
     vi.stubEnv('GEMINI_API_KEY_AUTH_MECHANISM', 'bearer');
 
     await createContentGenerator(
@@ -255,7 +255,7 @@ describe('createContentGenerator', () => {
       mockConfig,
     );
 
-    expect(GoogleGenAI).toHaveBeenCalledWith({
+    expect(GoogleContentGeneratorAdapter.create).toHaveBeenCalledWith({
       apiKey: 'test-api-key',
       vertexai: undefined,
       httpOptions: {
@@ -275,10 +275,10 @@ describe('createContentGenerator', () => {
       getPreviewFeatures: vi.fn().mockReturnValue(false),
     } as unknown as Config;
 
-    const mockGenerator = {
-      models: {},
-    } as unknown as GoogleGenAI;
-    vi.mocked(GoogleGenAI).mockImplementation(() => mockGenerator as never);
+    const mockGenerator = {} as unknown as ContentGenerator;
+    vi.mocked(GoogleContentGeneratorAdapter.create).mockReturnValue(
+      mockGenerator as never,
+    );
     // GEMINI_API_KEY_AUTH_MECHANISM is not stubbed, so it will be undefined, triggering default 'x-goog-api-key'
 
     await createContentGenerator(
@@ -289,7 +289,7 @@ describe('createContentGenerator', () => {
       mockConfig,
     );
 
-    expect(GoogleGenAI).toHaveBeenCalledWith({
+    expect(GoogleContentGeneratorAdapter.create).toHaveBeenCalledWith({
       apiKey: 'test-api-key',
       vertexai: undefined,
       httpOptions: {
@@ -299,7 +299,7 @@ describe('createContentGenerator', () => {
       },
     });
     // Explicitly assert that Authorization header is NOT present
-    expect(GoogleGenAI).toHaveBeenCalledWith(
+    expect(GoogleContentGeneratorAdapter.create).toHaveBeenCalledWith(
       expect.not.objectContaining({
         httpOptions: {
           headers: expect.objectContaining({
@@ -316,10 +316,10 @@ describe('createContentGenerator', () => {
       getUsageStatisticsEnabled: () => false,
       getPreviewFeatures: vi.fn().mockReturnValue(false),
     } as unknown as Config;
-    const mockGenerator = {
-      models: {},
-    } as unknown as GoogleGenAI;
-    vi.mocked(GoogleGenAI).mockImplementation(() => mockGenerator as never);
+    const mockGenerator = {} as unknown as ContentGenerator;
+    vi.mocked(GoogleContentGeneratorAdapter.create).mockReturnValue(
+      mockGenerator as never,
+    );
     const generator = await createContentGenerator(
       {
         apiKey: 'test-api-key',
@@ -327,7 +327,7 @@ describe('createContentGenerator', () => {
       },
       mockConfig,
     );
-    expect(GoogleGenAI).toHaveBeenCalledWith({
+    expect(GoogleContentGeneratorAdapter.create).toHaveBeenCalledWith({
       apiKey: 'test-api-key',
       vertexai: undefined,
       httpOptions: {
@@ -337,7 +337,7 @@ describe('createContentGenerator', () => {
       },
     });
     expect(generator).toEqual(
-      new LoggingContentGenerator(mockGenerator.models, mockConfig),
+      new LoggingContentGenerator(mockGenerator, mockConfig),
     );
   });
 

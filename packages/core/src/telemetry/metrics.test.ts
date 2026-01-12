@@ -94,6 +94,7 @@ describe('Telemetry Metrics', () => {
   let recordBaselineComparisonModule: typeof import('./metrics.js').recordBaselineComparison;
   let recordGenAiClientTokenUsageModule: typeof import('./metrics.js').recordGenAiClientTokenUsage;
   let recordGenAiClientOperationDurationModule: typeof import('./metrics.js').recordGenAiClientOperationDuration;
+  let getConventionAttributesModule: typeof import('./metrics.js').getConventionAttributes;
   let recordFlickerFrameModule: typeof import('./metrics.js').recordFlickerFrame;
   let recordExitFailModule: typeof import('./metrics.js').recordExitFail;
   let recordAgentRunMetricsModule: typeof import('./metrics.js').recordAgentRunMetrics;
@@ -138,6 +139,7 @@ describe('Telemetry Metrics', () => {
       metricsJsModule.recordGenAiClientTokenUsage;
     recordGenAiClientOperationDurationModule =
       metricsJsModule.recordGenAiClientOperationDuration;
+    getConventionAttributesModule = metricsJsModule.getConventionAttributes;
     recordFlickerFrameModule = metricsJsModule.recordFlickerFrame;
     recordExitFailModule = metricsJsModule.recordExitFail;
     recordAgentRunMetricsModule = metricsJsModule.recordAgentRunMetrics;
@@ -585,22 +587,13 @@ describe('Telemetry Metrics', () => {
 
     describe('getConventionAttributes', () => {
       it.each([
-        {
-          authType: AuthType.USE_OPENAI,
-          expectedProvider: GenAiProviderName.OPENAI,
-        },
-        {
-          authType: AuthType.USE_OPENROUTER,
-          expectedProvider: GenAiProviderName.OPENROUTER,
-        },
-        {
-          authType: AuthType.USE_OLLAMA,
-          expectedProvider: GenAiProviderName.OLLAMA,
-        },
+        ['openai', 'openai'],
+        ['openrouter', 'openrouter'],
+        ['ollama', 'ollama'],
       ])(
-        'maps $authType to $expectedProvider',
-        ({ authType, expectedProvider }) => {
-          const attributes = getConventionAttributes({
+        'maps auth type %s to provider %s',
+        (authType, expectedProvider) => {
+          const attributes = getConventionAttributesModule({
             model: 'test-model',
             auth_type: authType,
           });

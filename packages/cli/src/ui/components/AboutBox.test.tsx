@@ -6,6 +6,7 @@
 
 import { render } from '../../test-utils/render.js';
 import { AboutBox } from './AboutBox.js';
+import { AuthType } from '@google/gemini-cli-core';
 import { describe, it, expect, vi } from 'vitest';
 
 // Mock GIT_COMMIT_INFO
@@ -19,7 +20,7 @@ describe('AboutBox', () => {
     osVersion: 'macOS',
     sandboxEnv: 'default',
     modelVersion: 'gemini-pro',
-    selectedAuthType: 'oauth',
+    selectedAuthType: AuthType.LOGIN_WITH_GOOGLE,
     gcpProject: '',
     ideClient: '',
   };
@@ -49,9 +50,9 @@ describe('AboutBox', () => {
   });
 
   it('renders Auth Method correctly when not oauth', () => {
-    const props = { ...defaultProps, selectedAuthType: 'api-key' };
+    const props = { ...defaultProps, selectedAuthType: AuthType.OPENAI };
     const { lastFrame } = render(<AboutBox {...props} />);
     const output = lastFrame();
-    expect(output).toContain('api-key');
+    expect(output).toContain('OpenAI API Key');
   });
 });
