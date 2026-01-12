@@ -15,7 +15,7 @@ import type {
   GenerateContentResponse,
   Part,
 } from '../contentGeneratorTypes.js';
-import { GenerateContentResponse as GoogleGenerateContentResponse } from '../contentGeneratorTypes.js';
+import { GenerateContentResponse as GoogleGenerateContentResponse } from '@google/genai';
 import { toContents } from '../../code_assist/converter.js';
 import { estimateTokenCountSync } from '../../utils/tokenCalculation.js';
 
@@ -156,7 +156,9 @@ function partToText(part: Part | string): string {
   return '';
 }
 
-function toGenerateContentResponse(response: OllamaResponse): GenerateContentResponse {
+function toGenerateContentResponse(
+  response: OllamaResponse,
+): GenerateContentResponse {
   const out = new GoogleGenerateContentResponse();
   const text = response.message?.content ?? '';
   out.candidates = text
@@ -171,12 +173,14 @@ function toGenerateContentResponse(response: OllamaResponse): GenerateContentRes
     : [];
   out.modelVersion = response.model;
   out.usageMetadata =
-    response.prompt_eval_count !== undefined || response.eval_count !== undefined
+    response.prompt_eval_count !== undefined ||
+    response.eval_count !== undefined
       ? {
           promptTokenCount: response.prompt_eval_count,
           candidatesTokenCount: response.eval_count,
           totalTokenCount:
-            response.prompt_eval_count !== undefined && response.eval_count !== undefined
+            response.prompt_eval_count !== undefined &&
+            response.eval_count !== undefined
               ? response.prompt_eval_count + response.eval_count
               : undefined,
         }
@@ -236,12 +240,14 @@ async function* streamOllamaResponse(
       ];
       chunk.modelVersion = parsed.model;
       chunk.usageMetadata =
-        parsed.prompt_eval_count !== undefined || parsed.eval_count !== undefined
+        parsed.prompt_eval_count !== undefined ||
+        parsed.eval_count !== undefined
           ? {
               promptTokenCount: parsed.prompt_eval_count,
               candidatesTokenCount: parsed.eval_count,
               totalTokenCount:
-                parsed.prompt_eval_count !== undefined && parsed.eval_count !== undefined
+                parsed.prompt_eval_count !== undefined &&
+                parsed.eval_count !== undefined
                   ? parsed.prompt_eval_count + parsed.eval_count
                   : undefined,
             }

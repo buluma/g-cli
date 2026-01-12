@@ -5,13 +5,17 @@
  */
 
 import {
-  GenerateContentResponse,
+  type GenerateContentResponse,
   type CountTokensResponse,
   type GenerateContentParameters,
   type CountTokensParameters,
-  EmbedContentResponse,
+  type EmbedContentResponse,
   type EmbedContentParameters,
 } from './contentGeneratorTypes.js';
+import {
+  GenerateContentResponse as ActualGenerateContentResponse,
+  EmbedContentResponse as ActualEmbedContentResponse,
+} from '@google/genai';
 import { promises } from 'node:fs';
 import type { ContentGenerator } from './contentGenerator.js';
 import type { UserTierId } from '../code_assist/types.js';
@@ -79,7 +83,7 @@ export class FakeContentGenerator implements ContentGenerator {
   ): Promise<GenerateContentResponse> {
     return Object.setPrototypeOf(
       this.getNextResponse('generateContent', request),
-      GenerateContentResponse.prototype,
+      ActualGenerateContentResponse.prototype,
     );
   }
 
@@ -92,7 +96,7 @@ export class FakeContentGenerator implements ContentGenerator {
       for (const response of responses) {
         yield Object.setPrototypeOf(
           response,
-          GenerateContentResponse.prototype,
+          ActualGenerateContentResponse.prototype,
         );
       }
     }
@@ -110,7 +114,7 @@ export class FakeContentGenerator implements ContentGenerator {
   ): Promise<EmbedContentResponse> {
     return Object.setPrototypeOf(
       this.getNextResponse('embedContent', request),
-      EmbedContentResponse.prototype,
+      ActualEmbedContentResponse.prototype,
     );
   }
 }

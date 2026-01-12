@@ -15,7 +15,7 @@ import type {
   GenerateContentResponse,
   Part,
 } from '../contentGeneratorTypes.js';
-import { GenerateContentResponse as GoogleGenerateContentResponse } from '../contentGeneratorTypes.js';
+import { GenerateContentResponse as GoogleGenerateContentResponse } from '@google/genai';
 import { toContents } from '../../code_assist/converter.js';
 import { estimateTokenCountSync } from '../../utils/tokenCalculation.js';
 
@@ -30,7 +30,10 @@ export type OpenAIAdapterConfig = {
 type OpenAIChatChunk = {
   id?: string;
   model?: string;
-  choices?: Array<{ delta?: { content?: string }; finish_reason?: string | null }>;
+  choices?: Array<{
+    delta?: { content?: string };
+    finish_reason?: string | null;
+  }>;
   usage?: {
     prompt_tokens?: number;
     completion_tokens?: number;
@@ -41,7 +44,10 @@ type OpenAIChatChunk = {
 type OpenAIChatResponse = {
   id?: string;
   model?: string;
-  choices?: Array<{ message?: { content?: string }; finish_reason?: string | null }>;
+  choices?: Array<{
+    message?: { content?: string };
+    finish_reason?: string | null;
+  }>;
   usage?: {
     prompt_tokens?: number;
     completion_tokens?: number;
@@ -118,7 +124,7 @@ export class OpenAIContentGenerator implements ContentGenerator {
     };
 
     if (this.config.apiKey) {
-      headers.Authorization = `Bearer ${this.config.apiKey}`;
+      headers['Authorization'] = `Bearer ${this.config.apiKey}`;
     }
 
     return fetch(`${baseUrl}${path}`, {
@@ -129,7 +135,9 @@ export class OpenAIContentGenerator implements ContentGenerator {
   }
 }
 
-function toOpenAIParameters(request: GenerateContentParameters): Record<string, unknown> {
+function toOpenAIParameters(
+  request: GenerateContentParameters,
+): Record<string, unknown> {
   const config = request.config;
   if (!config) {
     return {};
@@ -198,7 +206,9 @@ function partToText(part: Part | string): string {
   return '';
 }
 
-function toGenerateContentResponse(response: OpenAIChatResponse): GenerateContentResponse {
+function toGenerateContentResponse(
+  response: OpenAIChatResponse,
+): GenerateContentResponse {
   const out = new GoogleGenerateContentResponse();
   const text = response.choices?.[0]?.message?.content ?? '';
   out.candidates = text

@@ -15,10 +15,10 @@ export type {
   CountTokensParameters,
   CountTokensResponse,
   EmbedContentParameters,
-  EmbedContentResponse,
+  // EmbedContentResponse,  // Already exported below
   GenerateContentConfig,
   GenerateContentParameters,
-  GenerateContentResponse,
+  // GenerateContentResponse,  // Already exported below
   GenerateContentResponsePromptFeedback,
   GenerateContentResponseUsageMetadata,
   Part,

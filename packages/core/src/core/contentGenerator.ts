@@ -53,9 +53,9 @@ export enum AuthType {
   LOGIN_WITH_GOOGLE = 'oauth-personal',
   USE_GEMINI = 'gemini-api-key',
   USE_VERTEX_AI = 'vertex-ai',
-  OPENAI = 'openai-api-key',
-  OPENROUTER = 'openrouter-api-key',
-  OLLAMA = 'ollama',
+  OPENAI = 'openai-api-key-legacy',
+  OPENROUTER = 'openrouter-api-key-legacy',
+  OLLAMA = 'ollama-legacy',
   LEGACY_CLOUD_SHELL = 'cloud-shell',
   COMPUTE_ADC = 'compute-default-credentials',
   USE_OPENAI = 'openai-api-key',
@@ -69,7 +69,6 @@ export type ContentGeneratorConfig = {
   vertexai?: boolean;
   authType?: AuthType;
   proxy?: string;
-  baseUrl?: string;
 };
 
 export async function createContentGeneratorConfig(
@@ -124,7 +123,8 @@ export async function createContentGeneratorConfig(
   }
 
   if (authType === AuthType.USE_OLLAMA) {
-    contentGeneratorConfig.baseUrl = ollamaBaseUrl;
+    // Use ollamaHost if available, otherwise use default ollamaBaseUrl
+    contentGeneratorConfig.baseUrl = ollamaHost || ollamaBaseUrl;
     return contentGeneratorConfig;
   }
 
@@ -142,11 +142,6 @@ export async function createContentGeneratorConfig(
 
   if (authType === AuthType.USE_OPENROUTER && openRouterApiKey) {
     contentGeneratorConfig.apiKey = openRouterApiKey;
-    return contentGeneratorConfig;
-  }
-
-  if (authType === AuthType.USE_OLLAMA && ollamaHost) {
-    contentGeneratorConfig.baseUrl = ollamaHost;
     return contentGeneratorConfig;
   }
 
@@ -260,27 +255,6 @@ export async function createContentGenerator(
         baseUrl: config.baseUrl,
       });
       return new LoggingContentGenerator(ollamaAdapter, gcConfig);
-    }
-    if (
-      config.authType === AuthType.USE_OPENAI ||
-      config.authType === AuthType.USE_OPENROUTER ||
-      config.authType === AuthType.USE_OLLAMA
-    ) {
-      const provider =
-        config.authType === AuthType.USE_OPENAI
-          ? 'openai'
-          : config.authType === AuthType.USE_OPENROUTER
-            ? 'openrouter'
-            : 'ollama';
-      return new LoggingContentGenerator(
-        await createOpenAiCompatibleContentGenerator(
-          provider,
-          config,
-          gcConfig,
-          sessionId,
-        ),
-        gcConfig,
-      );
     }
     throw new Error(
       `Error creating contentGenerator: Unsupported authType: ${config.authType}`,

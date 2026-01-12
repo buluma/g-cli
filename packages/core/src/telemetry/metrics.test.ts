@@ -18,13 +18,10 @@ import {
   MemoryMetricType,
   ToolExecutionPhase,
   ApiRequestPhase,
-  GenAiProviderName,
-  getConventionAttributes,
 } from './metrics.js';
 import { makeFakeConfig } from '../test-utils/config.js';
 import { ModelRoutingEvent, AgentFinishEvent } from './types.js';
 import { AgentTerminateMode } from '../agents/types.js';
-import { AuthType } from '../core/contentGenerator.js';
 
 const mockCounterAddFn: Mock<
   (value: number, attributes?: Attributes, context?: Context) => void
@@ -590,22 +587,19 @@ describe('Telemetry Metrics', () => {
         ['openai', 'openai'],
         ['openrouter', 'openrouter'],
         ['ollama', 'ollama'],
-      ])(
-        'maps auth type %s to provider %s',
-        (authType, expectedProvider) => {
-          const attributes = getConventionAttributesModule({
-            model: 'test-model',
-            auth_type: authType,
-          });
+      ])('maps auth type %s to provider %s', (authType, expectedProvider) => {
+        const attributes = getConventionAttributesModule({
+          model: 'test-model',
+          auth_type: authType,
+        });
 
-          expect(attributes).toEqual({
-            'gen_ai.operation.name': 'generate_content',
-            'gen_ai.provider.name': expectedProvider,
-            'gen_ai.request.model': 'test-model',
-            'gen_ai.response.model': 'test-model',
-          });
-        },
-      );
+        expect(attributes).toEqual({
+          'gen_ai.operation.name': 'generate_content',
+          'gen_ai.provider.name': expectedProvider,
+          'gen_ai.request.model': 'test-model',
+          'gen_ai.response.model': 'test-model',
+        });
+      });
     });
 
     describe('recordGenAiClientTokenUsage', () => {

@@ -35,16 +35,16 @@ export class GoogleContentGeneratorAdapter implements ContentGenerator {
 
   async generateContent(
     request: GenerateContentParameters,
-    userPromptId: string,
+    _userPromptId: string,
   ): Promise<GenerateContentResponse> {
-    return this.models.generateContent(request, userPromptId);
+    return this.models.generateContent(request);
   }
 
   async generateContentStream(
     request: GenerateContentParameters,
-    userPromptId: string,
+    _userPromptId: string,
   ): Promise<AsyncGenerator<GenerateContentResponse>> {
-    return this.models.generateContentStream(request, userPromptId);
+    return this.models.generateContentStream(request);
   }
 
   async countTokens(
