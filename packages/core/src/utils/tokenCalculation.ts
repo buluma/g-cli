@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { PartListUnion, Part } from '@google/genai';
+import type { PartListUnion, Part } from '../core/contentGeneratorTypes.js';
 import type { ContentGenerator } from '../core/contentGenerator.js';
 import { debugLogger } from './debugLogger.js';
 

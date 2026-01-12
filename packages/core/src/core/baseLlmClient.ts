@@ -11,7 +11,7 @@ import type {
   GenerateContentResponse,
   GenerateContentParameters,
   GenerateContentConfig,
-} from '@google/genai';
+} from './contentGeneratorTypes.js';
 import type { Config } from '../config/config.js';
 import type { ContentGenerator } from './contentGenerator.js';
 import type { AuthType } from './contentGenerator.js';

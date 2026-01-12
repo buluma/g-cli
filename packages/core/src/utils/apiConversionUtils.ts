@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { GenerateContentParameters } from '@google/genai';
+import type { GenerateContentParameters } from '../core/contentGeneratorTypes.js';
 
 /**
  * Transforms a standard SDK GenerateContentParameters object into the

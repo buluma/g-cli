@@ -15,7 +15,7 @@ import type {
   PartListUnion,
   GenerateContentConfig,
   GenerateContentParameters,
-} from '@google/genai';
+} from './contentGeneratorTypes.js';
 import { toParts } from '../code_assist/converter.js';
 import { createUserContent, FinishReason } from '@google/genai';
 import { retryWithBackoff, isRetryableError } from '../utils/retry.js';

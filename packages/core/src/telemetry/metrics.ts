@@ -499,6 +499,9 @@ export enum GenAiOperationName {
 export enum GenAiProviderName {
   GCP_GEN_AI = 'gcp.gen_ai',
   GCP_VERTEX_AI = 'gcp.vertex_ai',
+  OPENAI = 'openai',
+  OPENROUTER = 'openrouter',
+  OLLAMA = 'ollama',
 }
 
 export enum GenAiTokenType {
@@ -915,6 +918,12 @@ function getGenAiProvider(authType?: string): GenAiProviderName {
     case AuthType.COMPUTE_ADC:
     case AuthType.LOGIN_WITH_GOOGLE:
       return GenAiProviderName.GCP_VERTEX_AI;
+    case AuthType.USE_OPENAI:
+      return GenAiProviderName.OPENAI;
+    case AuthType.USE_OPENROUTER:
+      return GenAiProviderName.OPENROUTER;
+    case AuthType.USE_OLLAMA:
+      return GenAiProviderName.OLLAMA;
     case AuthType.USE_GEMINI:
     default:
       return GenAiProviderName.GCP_GEN_AI;
