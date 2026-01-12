@@ -17,6 +17,7 @@ import { SettingScope } from '../../config/settings.js';
 import {
   AuthType,
   clearCachedCredentialFile,
+  isOpenAiCompatibleContentGeneratorAvailable,
   type Config,
 } from '@google/gemini-cli-core';
 import { useKeypress } from '../hooks/useKeypress.js';
@@ -41,6 +42,7 @@ export function AuthDialog({
   onAuthError,
 }: AuthDialogProps): React.JSX.Element {
   const [exiting, setExiting] = useState(false);
+  const hasOpenAiCompatible = isOpenAiCompatibleContentGeneratorAvailable();
   let items = [
     {
       label: 'Login with Google',
@@ -69,6 +71,25 @@ export function AuthDialog({
       value: AuthType.USE_GEMINI,
       key: AuthType.USE_GEMINI,
     },
+    ...(hasOpenAiCompatible
+      ? [
+          {
+            label: 'OpenAI API Key',
+            value: AuthType.USE_OPENAI,
+            key: AuthType.USE_OPENAI,
+          },
+          {
+            label: 'OpenRouter API Key',
+            value: AuthType.USE_OPENROUTER,
+            key: AuthType.USE_OPENROUTER,
+          },
+          {
+            label: 'Ollama',
+            value: AuthType.USE_OLLAMA,
+            key: AuthType.USE_OLLAMA,
+          },
+        ]
+      : []),
     {
       label: 'Vertex AI',
       value: AuthType.USE_VERTEX_AI,
@@ -134,6 +155,9 @@ export function AuthDialog({
     return item.value === AuthType.LOGIN_WITH_GOOGLE;
   });
   if (settings.merged.security?.auth?.enforcedType) {
+    initialAuthIndex = 0;
+  }
+  if (initialAuthIndex < 0) {
     initialAuthIndex = 0;
   }
 

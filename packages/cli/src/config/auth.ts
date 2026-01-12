@@ -4,7 +4,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { AuthType } from '@google/gemini-cli-core';
+import {
+  AuthType,
+  isOpenAiCompatibleContentGeneratorAvailable,
+} from '@google/gemini-cli-core';
 import { loadEnvironment, loadSettings } from './settings.js';
 
 export function validateAuthMethod(authMethod: string): string | null {
@@ -20,6 +23,45 @@ export function validateAuthMethod(authMethod: string): string | null {
     if (!process.env['GEMINI_API_KEY']) {
       return (
         'When using Gemini API, you must specify the GEMINI_API_KEY environment variable.\n' +
+        'Update your environment and try again (no reload needed if using .env)!'
+      );
+    }
+    return null;
+  }
+
+  if (authMethod === AuthType.USE_OPENAI) {
+    if (!isOpenAiCompatibleContentGeneratorAvailable()) {
+      return 'OpenAI-compatible providers are not available in this build.';
+    }
+    if (!process.env['OPENAI_API_KEY']) {
+      return (
+        'When using OpenAI, you must specify the OPENAI_API_KEY environment variable.\n' +
+        'Update your environment and try again (no reload needed if using .env)!'
+      );
+    }
+    return null;
+  }
+
+  if (authMethod === AuthType.USE_OPENROUTER) {
+    if (!isOpenAiCompatibleContentGeneratorAvailable()) {
+      return 'OpenAI-compatible providers are not available in this build.';
+    }
+    if (!process.env['OPENROUTER_API_KEY']) {
+      return (
+        'When using OpenRouter, you must specify the OPENROUTER_API_KEY environment variable.\n' +
+        'Update your environment and try again (no reload needed if using .env)!'
+      );
+    }
+    return null;
+  }
+
+  if (authMethod === AuthType.USE_OLLAMA) {
+    if (!isOpenAiCompatibleContentGeneratorAvailable()) {
+      return 'OpenAI-compatible providers are not available in this build.';
+    }
+    if (!process.env['OLLAMA_HOST']) {
+      return (
+        'When using Ollama, you must specify the OLLAMA_HOST environment variable.\n' +
         'Update your environment and try again (no reload needed if using .env)!'
       );
     }

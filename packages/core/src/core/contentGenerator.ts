@@ -65,6 +65,7 @@ export enum AuthType {
 
 export type ContentGeneratorConfig = {
   apiKey?: string;
+  baseUrl?: string;
   vertexai?: boolean;
   authType?: AuthType;
   proxy?: string;
@@ -78,6 +79,9 @@ export async function createContentGeneratorConfig(
   const geminiApiKey =
     process.env['GEMINI_API_KEY'] || (await loadApiKey()) || undefined;
   const googleApiKey = process.env['GOOGLE_API_KEY'] || undefined;
+  const openAiApiKey = process.env['OPENAI_API_KEY'] || undefined;
+  const openRouterApiKey = process.env['OPENROUTER_API_KEY'] || undefined;
+  const ollamaHost = process.env['OLLAMA_HOST'] || undefined;
   const googleCloudProject =
     process.env['GOOGLE_CLOUD_PROJECT'] ||
     process.env['GOOGLE_CLOUD_PROJECT_ID'] ||
@@ -128,6 +132,21 @@ export async function createContentGeneratorConfig(
     contentGeneratorConfig.apiKey = geminiApiKey;
     contentGeneratorConfig.vertexai = false;
 
+    return contentGeneratorConfig;
+  }
+
+  if (authType === AuthType.USE_OPENAI && openAiApiKey) {
+    contentGeneratorConfig.apiKey = openAiApiKey;
+    return contentGeneratorConfig;
+  }
+
+  if (authType === AuthType.USE_OPENROUTER && openRouterApiKey) {
+    contentGeneratorConfig.apiKey = openRouterApiKey;
+    return contentGeneratorConfig;
+  }
+
+  if (authType === AuthType.USE_OLLAMA && ollamaHost) {
+    contentGeneratorConfig.baseUrl = ollamaHost;
     return contentGeneratorConfig;
   }
 
@@ -241,6 +260,27 @@ export async function createContentGenerator(
         baseUrl: config.baseUrl,
       });
       return new LoggingContentGenerator(ollamaAdapter, gcConfig);
+    }
+    if (
+      config.authType === AuthType.USE_OPENAI ||
+      config.authType === AuthType.USE_OPENROUTER ||
+      config.authType === AuthType.USE_OLLAMA
+    ) {
+      const provider =
+        config.authType === AuthType.USE_OPENAI
+          ? 'openai'
+          : config.authType === AuthType.USE_OPENROUTER
+            ? 'openrouter'
+            : 'ollama';
+      return new LoggingContentGenerator(
+        await createOpenAiCompatibleContentGenerator(
+          provider,
+          config,
+          gcConfig,
+          sessionId,
+        ),
+        gcConfig,
+      );
     }
     throw new Error(
       `Error creating contentGenerator: Unsupported authType: ${config.authType}`,

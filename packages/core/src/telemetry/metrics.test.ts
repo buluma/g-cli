@@ -18,10 +18,13 @@ import {
   MemoryMetricType,
   ToolExecutionPhase,
   ApiRequestPhase,
+  GenAiProviderName,
+  getConventionAttributes,
 } from './metrics.js';
 import { makeFakeConfig } from '../test-utils/config.js';
 import { ModelRoutingEvent, AgentFinishEvent } from './types.js';
 import { AgentTerminateMode } from '../agents/types.js';
+import { AuthType } from '../core/contentGenerator.js';
 
 const mockCounterAddFn: Mock<
   (value: number, attributes?: Attributes, context?: Context) => void
