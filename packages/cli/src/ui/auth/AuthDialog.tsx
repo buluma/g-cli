@@ -74,6 +74,21 @@ export function AuthDialog({
       value: AuthType.USE_VERTEX_AI,
       key: AuthType.USE_VERTEX_AI,
     },
+    {
+      label: 'OpenAI API Key',
+      value: AuthType.OPENAI,
+      key: AuthType.OPENAI,
+    },
+    {
+      label: 'OpenRouter API Key',
+      value: AuthType.OPENROUTER,
+      key: AuthType.OPENROUTER,
+    },
+    {
+      label: 'Ollama',
+      value: AuthType.OLLAMA,
+      key: AuthType.OLLAMA,
+    },
   ];
 
   if (settings.merged.security?.auth?.enforcedType) {
@@ -102,6 +117,18 @@ export function AuthDialog({
 
     if (process.env['GEMINI_API_KEY']) {
       return item.value === AuthType.USE_GEMINI;
+    }
+
+    if (process.env['OPENAI_API_KEY']) {
+      return item.value === AuthType.OPENAI;
+    }
+
+    if (process.env['OPENROUTER_API_KEY']) {
+      return item.value === AuthType.OPENROUTER;
+    }
+
+    if (process.env['OLLAMA_HOST']) {
+      return item.value === AuthType.OLLAMA;
     }
 
     return item.value === AuthType.LOGIN_WITH_GOOGLE;

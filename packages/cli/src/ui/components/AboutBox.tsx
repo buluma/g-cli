@@ -8,6 +8,7 @@ import type React from 'react';
 import { Box, Text } from 'ink';
 import { theme } from '../semantic-colors.js';
 import { GIT_COMMIT_INFO } from '../../generated/git-commit.js';
+import { AuthType } from '@google/gemini-cli-core';
 
 interface AboutBoxProps {
   cliVersion: string;
@@ -29,119 +30,138 @@ export const AboutBox: React.FC<AboutBoxProps> = ({
   gcpProject,
   ideClient,
   userEmail,
-}) => (
-  <Box
-    borderStyle="round"
-    borderColor={theme.border.default}
-    flexDirection="column"
-    padding={1}
-    marginY={1}
-    width="100%"
-  >
-    <Box marginBottom={1}>
-      <Text bold color={theme.text.accent}>
-        About Gemini CLI
-      </Text>
-    </Box>
-    <Box flexDirection="row">
-      <Box width="35%">
-        <Text bold color={theme.text.link}>
-          CLI Version
+}) => {
+  const authType = Object.values(AuthType).includes(
+    selectedAuthType as AuthType,
+  )
+    ? (selectedAuthType as AuthType)
+    : undefined;
+  const authLabelMap: Partial<Record<AuthType, string>> = {
+    [AuthType.LOGIN_WITH_GOOGLE]: 'OAuth',
+    [AuthType.COMPUTE_ADC]: 'Application Default Credentials',
+    [AuthType.USE_GEMINI]: 'Gemini API Key',
+    [AuthType.USE_VERTEX_AI]: 'Vertex AI',
+    [AuthType.OPENAI]: 'OpenAI API Key',
+    [AuthType.OPENROUTER]: 'OpenRouter API Key',
+    [AuthType.OLLAMA]: 'Ollama',
+    [AuthType.LEGACY_CLOUD_SHELL]: 'Cloud Shell',
+  };
+  const authLabel = authType ? authLabelMap[authType] : undefined;
+
+  return (
+    <Box
+      borderStyle="round"
+      borderColor={theme.border.default}
+      flexDirection="column"
+      padding={1}
+      marginY={1}
+      width="100%"
+    >
+      <Box marginBottom={1}>
+        <Text bold color={theme.text.accent}>
+          About Gemini CLI
         </Text>
       </Box>
-      <Box>
-        <Text color={theme.text.primary}>{cliVersion}</Text>
-      </Box>
-    </Box>
-    {GIT_COMMIT_INFO && !['N/A'].includes(GIT_COMMIT_INFO) && (
       <Box flexDirection="row">
         <Box width="35%">
           <Text bold color={theme.text.link}>
-            Git Commit
+            CLI Version
           </Text>
         </Box>
         <Box>
-          <Text color={theme.text.primary}>{GIT_COMMIT_INFO}</Text>
+          <Text color={theme.text.primary}>{cliVersion}</Text>
         </Box>
       </Box>
-    )}
-    <Box flexDirection="row">
-      <Box width="35%">
-        <Text bold color={theme.text.link}>
-          Model
-        </Text>
-      </Box>
-      <Box>
-        <Text color={theme.text.primary}>{modelVersion}</Text>
-      </Box>
-    </Box>
-    <Box flexDirection="row">
-      <Box width="35%">
-        <Text bold color={theme.text.link}>
-          Sandbox
-        </Text>
-      </Box>
-      <Box>
-        <Text color={theme.text.primary}>{sandboxEnv}</Text>
-      </Box>
-    </Box>
-    <Box flexDirection="row">
-      <Box width="35%">
-        <Text bold color={theme.text.link}>
-          OS
-        </Text>
-      </Box>
-      <Box>
-        <Text color={theme.text.primary}>{osVersion}</Text>
-      </Box>
-    </Box>
-    <Box flexDirection="row">
-      <Box width="35%">
-        <Text bold color={theme.text.link}>
-          Auth Method
-        </Text>
-      </Box>
-      <Box>
-        <Text color={theme.text.primary}>
-          {selectedAuthType.startsWith('oauth') ? 'OAuth' : selectedAuthType}
-        </Text>
-      </Box>
-    </Box>
-    {userEmail && (
+      {GIT_COMMIT_INFO && !['N/A'].includes(GIT_COMMIT_INFO) && (
+        <Box flexDirection="row">
+          <Box width="35%">
+            <Text bold color={theme.text.link}>
+              Git Commit
+            </Text>
+          </Box>
+          <Box>
+            <Text color={theme.text.primary}>{GIT_COMMIT_INFO}</Text>
+          </Box>
+        </Box>
+      )}
       <Box flexDirection="row">
         <Box width="35%">
           <Text bold color={theme.text.link}>
-            User Email
+            Model
           </Text>
         </Box>
         <Box>
-          <Text color={theme.text.primary}>{userEmail}</Text>
+          <Text color={theme.text.primary}>{modelVersion}</Text>
         </Box>
       </Box>
-    )}
-    {gcpProject && (
       <Box flexDirection="row">
         <Box width="35%">
           <Text bold color={theme.text.link}>
-            GCP Project
+            Sandbox
           </Text>
         </Box>
         <Box>
-          <Text color={theme.text.primary}>{gcpProject}</Text>
+          <Text color={theme.text.primary}>{sandboxEnv}</Text>
         </Box>
       </Box>
-    )}
-    {ideClient && (
       <Box flexDirection="row">
         <Box width="35%">
           <Text bold color={theme.text.link}>
-            IDE Client
+            OS
           </Text>
         </Box>
         <Box>
-          <Text color={theme.text.primary}>{ideClient}</Text>
+          <Text color={theme.text.primary}>{osVersion}</Text>
         </Box>
       </Box>
-    )}
-  </Box>
-);
+      <Box flexDirection="row">
+        <Box width="35%">
+          <Text bold color={theme.text.link}>
+            Auth Method
+          </Text>
+        </Box>
+        <Box>
+          <Text color={theme.text.primary}>
+            {authLabel ?? selectedAuthType}
+          </Text>
+        </Box>
+      </Box>
+      {userEmail && (
+        <Box flexDirection="row">
+          <Box width="35%">
+            <Text bold color={theme.text.link}>
+              User Email
+            </Text>
+          </Box>
+          <Box>
+            <Text color={theme.text.primary}>{userEmail}</Text>
+          </Box>
+        </Box>
+      )}
+      {gcpProject && (
+        <Box flexDirection="row">
+          <Box width="35%">
+            <Text bold color={theme.text.link}>
+              GCP Project
+            </Text>
+          </Box>
+          <Box>
+            <Text color={theme.text.primary}>{gcpProject}</Text>
+          </Box>
+        </Box>
+      )}
+      {ideClient && (
+        <Box flexDirection="row">
+          <Box width="35%">
+            <Text bold color={theme.text.link}>
+              IDE Client
+            </Text>
+          </Box>
+          <Box>
+            <Text color={theme.text.primary}>{ideClient}</Text>
+          </Box>
+        </Box>
+      )}
+    </Box>
+  );
+};

@@ -21,6 +21,9 @@ describe('validateAuthMethod', () => {
     vi.stubEnv('GOOGLE_CLOUD_PROJECT', undefined);
     vi.stubEnv('GOOGLE_CLOUD_LOCATION', undefined);
     vi.stubEnv('GOOGLE_API_KEY', undefined);
+    vi.stubEnv('OPENAI_API_KEY', undefined);
+    vi.stubEnv('OPENROUTER_API_KEY', undefined);
+    vi.stubEnv('OLLAMA_HOST', undefined);
   });
 
   afterEach(() => {
@@ -81,6 +84,53 @@ describe('validateAuthMethod', () => {
         'When using Vertex AI, you must specify either:\n' +
         '• GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION environment variables.\n' +
         '• GOOGLE_API_KEY environment variable (if using express mode).\n' +
+        'Update your environment and try again (no reload needed if using .env)!',
+    },
+    {
+      description:
+        'should return null for OPENAI if OPENAI_API_KEY is set',
+      authType: AuthType.OPENAI,
+      envs: { OPENAI_API_KEY: 'test-key' },
+      expected: null,
+    },
+    {
+      description:
+        'should return an error message for OPENAI if OPENAI_API_KEY is not set',
+      authType: AuthType.OPENAI,
+      envs: {},
+      expected:
+        'When using OpenAI, you must specify the OPENAI_API_KEY environment variable.\n' +
+        'Update your environment and try again (no reload needed if using .env)!',
+    },
+    {
+      description:
+        'should return null for OPENROUTER if OPENROUTER_API_KEY is set',
+      authType: AuthType.OPENROUTER,
+      envs: { OPENROUTER_API_KEY: 'test-key' },
+      expected: null,
+    },
+    {
+      description:
+        'should return an error message for OPENROUTER if OPENROUTER_API_KEY is not set',
+      authType: AuthType.OPENROUTER,
+      envs: {},
+      expected:
+        'When using OpenRouter, you must specify the OPENROUTER_API_KEY environment variable.\n' +
+        'Update your environment and try again (no reload needed if using .env)!',
+    },
+    {
+      description: 'should return null for OLLAMA if OLLAMA_HOST is set',
+      authType: AuthType.OLLAMA,
+      envs: { OLLAMA_HOST: 'http://localhost:11434' },
+      expected: null,
+    },
+    {
+      description:
+        'should return an error message for OLLAMA if OLLAMA_HOST is not set',
+      authType: AuthType.OLLAMA,
+      envs: {},
+      expected:
+        'When using Ollama, you must specify the OLLAMA_HOST environment variable (for example, http://localhost:11434).\n' +
         'Update your environment and try again (no reload needed if using .env)!',
     },
     {

@@ -34,6 +34,41 @@ export function validateAuthMethodWithSettings(
   return validateAuthMethod(authType);
 }
 
+const ENV_AUTH_HINTS: Array<{
+  envVar: string;
+  authType: AuthType;
+  label: string;
+}> = [
+  {
+    envVar: 'GEMINI_API_KEY',
+    authType: AuthType.USE_GEMINI,
+    label: 'Gemini API Key',
+  },
+  {
+    envVar: 'OPENAI_API_KEY',
+    authType: AuthType.OPENAI,
+    label: 'OpenAI API Key',
+  },
+  {
+    envVar: 'OPENROUTER_API_KEY',
+    authType: AuthType.OPENROUTER,
+    label: 'OpenRouter API Key',
+  },
+  {
+    envVar: 'OLLAMA_HOST',
+    authType: AuthType.OLLAMA,
+    label: 'Ollama',
+  },
+];
+
+function getEnvAuthHint():
+  | { authType: AuthType; envVar: string; label: string }
+  | undefined {
+  return ENV_AUTH_HINTS.find(
+    ({ envVar }) => process.env[envVar] !== undefined,
+  );
+}
+
 export const useAuthCommand = (settings: LoadedSettings, config: Config) => {
   const [authState, setAuthState] = useState<AuthState>(
     AuthState.Unauthenticated,
@@ -82,9 +117,10 @@ export const useAuthCommand = (settings: LoadedSettings, config: Config) => {
 
       const authType = settings.merged.security?.auth?.selectedType;
       if (!authType) {
-        if (process.env['GEMINI_API_KEY']) {
+        const envAuthHint = getEnvAuthHint();
+        if (envAuthHint) {
           onAuthError(
-            'Existing API key detected (GEMINI_API_KEY). Select "Gemini API Key" option to use it.',
+            `Existing credentials detected (${envAuthHint.envVar}). Select "${envAuthHint.label}" to use them.`,
           );
         } else {
           onAuthError('No authentication method selected.');
