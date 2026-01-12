@@ -8,6 +8,18 @@ import { AuthType } from '@google/gemini-cli-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { validateAuthMethod } from './auth.js';
 
+const mockIsOpenAiCompatibleAvailable = vi.fn();
+
+vi.mock('@google/gemini-cli-core', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@google/gemini-cli-core')>();
+  return {
+    ...actual,
+    isOpenAiCompatibleContentGeneratorAvailable:
+      mockIsOpenAiCompatibleAvailable,
+  };
+});
+
 vi.mock('./settings.js', () => ({
   loadEnvironment: vi.fn(),
   loadSettings: vi.fn().mockReturnValue({
@@ -17,6 +29,7 @@ vi.mock('./settings.js', () => ({
 
 describe('validateAuthMethod', () => {
   beforeEach(() => {
+    mockIsOpenAiCompatibleAvailable.mockReturnValue(false);
     vi.stubEnv('GEMINI_API_KEY', undefined);
     vi.stubEnv('GOOGLE_CLOUD_PROJECT', undefined);
     vi.stubEnv('GOOGLE_CLOUD_LOCATION', undefined);
@@ -63,6 +76,7 @@ describe('validateAuthMethod', () => {
         'should return null for USE_OPENAI if OPENAI_API_KEY is set',
       authType: AuthType.USE_OPENAI,
       envs: { OPENAI_API_KEY: 'test-openai-key' },
+      setup: () => mockIsOpenAiCompatibleAvailable.mockReturnValue(true),
       expected: null,
     },
     {
@@ -70,15 +84,24 @@ describe('validateAuthMethod', () => {
         'should return an error message for USE_OPENAI if OPENAI_API_KEY is not set',
       authType: AuthType.USE_OPENAI,
       envs: {},
+      setup: () => mockIsOpenAiCompatibleAvailable.mockReturnValue(true),
       expected:
         'When using OpenAI, you must specify the OPENAI_API_KEY environment variable.\n' +
         'Update your environment and try again (no reload needed if using .env)!',
     },
     {
       description:
+        'should return an error message for USE_OPENAI if OpenAI-compatible providers are unavailable',
+      authType: AuthType.USE_OPENAI,
+      envs: { OPENAI_API_KEY: 'test-openai-key' },
+      expected: 'OpenAI-compatible providers are not available in this build.',
+    },
+    {
+      description:
         'should return null for USE_OPENROUTER if OPENROUTER_API_KEY is set',
       authType: AuthType.USE_OPENROUTER,
       envs: { OPENROUTER_API_KEY: 'test-openrouter-key' },
+      setup: () => mockIsOpenAiCompatibleAvailable.mockReturnValue(true),
       expected: null,
     },
     {
@@ -86,6 +109,7 @@ describe('validateAuthMethod', () => {
         'should return an error message for USE_OPENROUTER if OPENROUTER_API_KEY is not set',
       authType: AuthType.USE_OPENROUTER,
       envs: {},
+      setup: () => mockIsOpenAiCompatibleAvailable.mockReturnValue(true),
       expected:
         'When using OpenRouter, you must specify the OPENROUTER_API_KEY environment variable.\n' +
         'Update your environment and try again (no reload needed if using .env)!',
@@ -94,6 +118,7 @@ describe('validateAuthMethod', () => {
       description: 'should return null for USE_OLLAMA if OLLAMA_HOST is set',
       authType: AuthType.USE_OLLAMA,
       envs: { OLLAMA_HOST: 'http://localhost:11434' },
+      setup: () => mockIsOpenAiCompatibleAvailable.mockReturnValue(true),
       expected: null,
     },
     {
@@ -101,6 +126,7 @@ describe('validateAuthMethod', () => {
         'should return an error message for USE_OLLAMA if OLLAMA_HOST is not set',
       authType: AuthType.USE_OLLAMA,
       envs: {},
+      setup: () => mockIsOpenAiCompatibleAvailable.mockReturnValue(true),
       expected:
         'When using Ollama, you must specify the OLLAMA_HOST environment variable.\n' +
         'Update your environment and try again (no reload needed if using .env)!',
@@ -140,7 +166,8 @@ describe('validateAuthMethod', () => {
       envs: {},
       expected: 'Invalid auth method selected.',
     },
-  ])('$description', ({ authType, envs, expected }) => {
+  ])('$description', ({ authType, envs, expected, setup }) => {
+    setup?.();
     for (const [key, value] of Object.entries(envs)) {
       vi.stubEnv(key, value as string);
     }

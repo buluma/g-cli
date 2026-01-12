@@ -21,10 +21,20 @@ import {
   debugLogger,
   ExitCodes,
   coreEvents,
+  isOpenAiCompatibleContentGeneratorAvailable,
 } from '@google/gemini-cli-core';
 import type { Config } from '@google/gemini-cli-core';
 import * as auth from './config/auth.js';
 import { type LoadedSettings } from './config/settings.js';
+
+vi.mock('@google/gemini-cli-core', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@google/gemini-cli-core')>();
+  return {
+    ...actual,
+    isOpenAiCompatibleContentGeneratorAvailable: vi.fn(),
+  };
+});
 
 function createLocalMockConfig(overrides: Partial<Config> = {}): Config {
   const config = makeFakeConfig();
@@ -43,8 +53,11 @@ describe('validateNonInterActiveAuth', () => {
   let coreEventsEmitFeedbackSpy: MockInstance;
   let processExitSpy: MockInstance;
   let mockSettings: LoadedSettings;
+  const mockedIsOpenAiCompatibleAvailable =
+    isOpenAiCompatibleContentGeneratorAvailable as unknown as MockInstance;
 
   beforeEach(() => {
+    mockedIsOpenAiCompatibleAvailable.mockReturnValue(false);
     originalEnvGeminiApiKey = process.env['GEMINI_API_KEY'];
     originalEnvVertexAi = process.env['GOOGLE_GENAI_USE_VERTEXAI'];
     originalEnvGcp = process.env['GOOGLE_GENAI_USE_GCA'];
@@ -181,6 +194,7 @@ describe('validateNonInterActiveAuth', () => {
   });
 
   it('uses USE_OPENAI if OPENAI_API_KEY is set', async () => {
+    mockedIsOpenAiCompatibleAvailable.mockReturnValue(true);
     process.env['OPENAI_API_KEY'] = 'openai-key';
     const nonInteractiveConfig = createLocalMockConfig({});
     await validateNonInteractiveAuth(
@@ -194,6 +208,7 @@ describe('validateNonInterActiveAuth', () => {
   });
 
   it('uses USE_OPENROUTER if OPENROUTER_API_KEY is set', async () => {
+    mockedIsOpenAiCompatibleAvailable.mockReturnValue(true);
     process.env['OPENROUTER_API_KEY'] = 'openrouter-key';
     const nonInteractiveConfig = createLocalMockConfig({});
     await validateNonInteractiveAuth(
@@ -207,6 +222,7 @@ describe('validateNonInterActiveAuth', () => {
   });
 
   it('uses USE_OLLAMA if OLLAMA_HOST is set', async () => {
+    mockedIsOpenAiCompatibleAvailable.mockReturnValue(true);
     process.env['OLLAMA_HOST'] = 'http://localhost:11434';
     const nonInteractiveConfig = createLocalMockConfig({});
     await validateNonInteractiveAuth(

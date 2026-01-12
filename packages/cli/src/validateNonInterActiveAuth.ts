@@ -10,6 +10,7 @@ import {
   debugLogger,
   OutputFormat,
   ExitCodes,
+  isOpenAiCompatibleContentGeneratorAvailable,
 } from '@google/gemini-cli-core';
 import { USER_SETTINGS_PATH } from './config/settings.js';
 import { validateAuthMethod } from './config/auth.js';
@@ -18,20 +19,23 @@ import { handleError } from './utils/errors.js';
 import { runExitCleanup } from './utils/cleanup.js';
 
 function getAuthTypeFromEnv(): AuthType | undefined {
+  const hasOpenAiCompatible = isOpenAiCompatibleContentGeneratorAvailable();
   if (process.env['GOOGLE_GENAI_USE_GCA'] === 'true') {
     return AuthType.LOGIN_WITH_GOOGLE;
   }
   if (process.env['GOOGLE_GENAI_USE_VERTEXAI'] === 'true') {
     return AuthType.USE_VERTEX_AI;
   }
-  if (process.env['OPENAI_API_KEY']) {
-    return AuthType.USE_OPENAI;
-  }
-  if (process.env['OPENROUTER_API_KEY']) {
-    return AuthType.USE_OPENROUTER;
-  }
-  if (process.env['OLLAMA_HOST']) {
-    return AuthType.USE_OLLAMA;
+  if (hasOpenAiCompatible) {
+    if (process.env['OPENAI_API_KEY']) {
+      return AuthType.USE_OPENAI;
+    }
+    if (process.env['OPENROUTER_API_KEY']) {
+      return AuthType.USE_OPENROUTER;
+    }
+    if (process.env['OLLAMA_HOST']) {
+      return AuthType.USE_OLLAMA;
+    }
   }
   if (process.env['GEMINI_API_KEY']) {
     return AuthType.USE_GEMINI;
@@ -57,7 +61,17 @@ export async function validateNonInteractiveAuth(
     }
 
     if (!effectiveAuthType) {
-      const message = `Please set an Auth method in your ${USER_SETTINGS_PATH} or specify one of the following environment variables before running: GEMINI_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY, OLLAMA_HOST, GOOGLE_GENAI_USE_VERTEXAI, GOOGLE_GENAI_USE_GCA`;
+      const authEnvVars = [
+        'GEMINI_API_KEY',
+        ...(isOpenAiCompatibleContentGeneratorAvailable()
+          ? ['OPENAI_API_KEY', 'OPENROUTER_API_KEY', 'OLLAMA_HOST']
+          : []),
+        'GOOGLE_GENAI_USE_VERTEXAI',
+        'GOOGLE_GENAI_USE_GCA',
+      ];
+      const message = `Please set an Auth method in your ${USER_SETTINGS_PATH} or specify one of the following environment variables before running: ${authEnvVars.join(
+        ', ',
+      )}`;
       throw new Error(message);
     }
 

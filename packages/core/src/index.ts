@@ -27,6 +27,7 @@ export * from './commands/types.js';
 // Export Core Logic
 export * from './core/client.js';
 export * from './core/contentGenerator.js';
+export { isOpenAiCompatibleContentGeneratorAvailable } from './core/openAiContentGenerator.js';
 export * from './core/loggingContentGenerator.js';
 export * from './core/geminiChat.js';
 export * from './core/logger.js';

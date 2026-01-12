@@ -15,7 +15,12 @@ import {
   type Mock,
 } from 'vitest';
 import { AuthDialog } from './AuthDialog.js';
-import { AuthType, type Config, debugLogger } from '@google/gemini-cli-core';
+import {
+  AuthType,
+  type Config,
+  debugLogger,
+  isOpenAiCompatibleContentGeneratorAvailable,
+} from '@google/gemini-cli-core';
 import type { LoadedSettings } from '../../config/settings.js';
 import { AuthState } from '../types.js';
 import { RadioButtonSelect } from '../components/shared/RadioButtonSelect.js';
@@ -32,6 +37,7 @@ vi.mock('@google/gemini-cli-core', async (importOriginal) => {
   return {
     ...actual,
     clearCachedCredentialFile: vi.fn(),
+    isOpenAiCompatibleContentGeneratorAvailable: vi.fn(),
   };
 });
 
@@ -64,6 +70,8 @@ const mockedUseKeypress = useKeypress as Mock;
 const mockedRadioButtonSelect = RadioButtonSelect as Mock;
 const mockedValidateAuthMethod = validateAuthMethodWithSettings as Mock;
 const mockedRunExitCleanup = runExitCleanup as Mock;
+const mockedIsOpenAiCompatibleAvailable =
+  isOpenAiCompatibleContentGeneratorAvailable as Mock;
 
 describe('AuthDialog', () => {
   let props: {
@@ -78,6 +86,7 @@ describe('AuthDialog', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     process.env = {};
+    mockedIsOpenAiCompatibleAvailable.mockReturnValue(false);
 
     props = {
       config: {
@@ -150,6 +159,7 @@ describe('AuthDialog', () => {
   });
 
   it('includes OpenAI, OpenRouter, and Ollama auth options', () => {
+    mockedIsOpenAiCompatibleAvailable.mockReturnValue(true);
     renderWithProviders(<AuthDialog {...props} />);
     const items = mockedRadioButtonSelect.mock.calls[0][0].items;
     expect(items).toContainEqual({
@@ -196,6 +206,7 @@ describe('AuthDialog', () => {
       },
       {
         setup: () => {
+          mockedIsOpenAiCompatibleAvailable.mockReturnValue(true);
           props.settings.merged.security!.auth!.selectedType =
             AuthType.USE_OPENROUTER;
         },

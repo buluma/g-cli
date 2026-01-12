@@ -12,6 +12,12 @@ import type {
 
 export type OpenAiCompatibleProvider = 'openai' | 'openrouter' | 'ollama';
 
+export const OPENAI_COMPATIBLE_AVAILABLE = false;
+
+export function isOpenAiCompatibleContentGeneratorAvailable(): boolean {
+  return OPENAI_COMPATIBLE_AVAILABLE;
+}
+
 export async function createOpenAiCompatibleContentGenerator(
   provider: OpenAiCompatibleProvider,
   _config: ContentGeneratorConfig,
