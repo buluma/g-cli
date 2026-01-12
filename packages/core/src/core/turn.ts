@@ -11,7 +11,7 @@ import type {
   FunctionDeclaration,
   FinishReason,
   GenerateContentResponseUsageMetadata,
-} from '@google/genai';
+} from './contentGeneratorTypes.js';
 import type {
   ToolCallConfirmationDetails,
   ToolResult,

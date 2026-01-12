@@ -11,7 +11,7 @@ import {
   type CountTokensParameters,
   EmbedContentResponse,
   type EmbedContentParameters,
-} from '@google/genai';
+} from './contentGeneratorTypes.js';
 import { promises } from 'node:fs';
 import type { ContentGenerator } from './contentGenerator.js';
 import type { UserTierId } from '../code_assist/types.js';

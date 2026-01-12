@@ -9,7 +9,7 @@ import type {
   PartListUnion,
   Part,
   PartUnion,
-} from '@google/genai';
+} from '../core/contentGeneratorTypes.js';
 
 /**
  * Converts a PartListUnion into a string.

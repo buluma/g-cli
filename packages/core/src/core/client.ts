@@ -10,7 +10,7 @@ import type {
   Content,
   Tool,
   GenerateContentResponse,
-} from '@google/genai';
+} from './contentGeneratorTypes.js';
 import { createUserContent } from '@google/genai';
 import type { MessageBus } from '../confirmation-bus/message-bus.js';
 import {

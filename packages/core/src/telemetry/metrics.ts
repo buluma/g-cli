@@ -920,6 +920,12 @@ function getGenAiProvider(authType?: string): GenAiProviderName {
     case AuthType.LOGIN_WITH_GOOGLE:
     case AuthType.LEGACY_CLOUD_SHELL:
       return GenAiProviderName.GCP_VERTEX_AI;
+    case AuthType.USE_OPENAI:
+      return GenAiProviderName.OPENAI;
+    case AuthType.USE_OPENROUTER:
+      return GenAiProviderName.OPENROUTER;
+    case AuthType.USE_OLLAMA:
+      return GenAiProviderName.OLLAMA;
     case AuthType.USE_GEMINI:
       return GenAiProviderName.GCP_GEN_AI;
     case 'openai':

@@ -11,7 +11,7 @@ import type {
   ContentListUnion,
   ToolConfig,
   ToolListUnion,
-} from '@google/genai';
+} from './contentGeneratorTypes.js';
 import type { MessageBus } from '../confirmation-bus/message-bus.js';
 import {
   MessageBusType,
