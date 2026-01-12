@@ -50,6 +50,9 @@ export enum AuthType {
   LOGIN_WITH_GOOGLE = 'oauth-personal',
   USE_GEMINI = 'gemini-api-key',
   USE_VERTEX_AI = 'vertex-ai',
+  OPENAI = 'openai-api-key',
+  OPENROUTER = 'openrouter-api-key',
+  OLLAMA = 'ollama',
   LEGACY_CLOUD_SHELL = 'cloud-shell',
   COMPUTE_ADC = 'compute-default-credentials',
 }

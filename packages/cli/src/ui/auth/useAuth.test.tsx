@@ -166,7 +166,7 @@ describe('useAuth', () => {
 
       await waitFor(() => {
         expect(result.current.authError).toContain(
-          'Existing API key detected (GEMINI_API_KEY)',
+          'Existing credentials detected (GEMINI_API_KEY). Select "Gemini API Key" to use them.',
         );
         expect(result.current.authState).toBe(AuthState.Updating);
       });
