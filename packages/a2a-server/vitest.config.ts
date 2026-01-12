@@ -5,9 +5,27 @@
  */
 
 /// <reference types="vitest" />
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
+const currentDir = path.dirname(fileURLToPath(import.meta.url));
+const coreEntry = path.resolve(currentDir, '../core/src/index.ts');
+const coreSrc = path.resolve(currentDir, '../core/src');
+
 export default defineConfig({
+  resolve: {
+    alias: [
+      {
+        find: /^@google\/gemini-cli-core$/,
+        replacement: coreEntry,
+      },
+      {
+        find: /^@google\/gemini-cli-core\/src\/(.*)$/,
+        replacement: `${coreSrc}/$1`,
+      },
+    ],
+  },
   test: {
     include: ['**/*.{test,spec}.?(c|m)[jt]s?(x)'],
     exclude: ['**/node_modules/**', '**/dist/**'],
