@@ -171,9 +171,33 @@ export async function createContentGenerator(
       );
     }
     const version = await getVersion();
-    const model = resolveModel(
+
+    // Resolve model based on auth type
+    const resolveModelForProviderLocal = (
+      authType: AuthType,
+      requestedModel: string,
+      previewFeaturesEnabled: boolean,
+    ): string => {
+      // For Gemini providers, use the existing resolution logic
+      if (
+        authType === AuthType.USE_GEMINI ||
+        authType === AuthType.USE_VERTEX_AI ||
+        authType === AuthType.LOGIN_WITH_GOOGLE ||
+        authType === AuthType.LEGACY_CLOUD_SHELL ||
+        authType === AuthType.COMPUTE_ADC
+      ) {
+        return resolveModel(requestedModel, previewFeaturesEnabled);
+      }
+
+      // For other providers, return the requested model directly
+      // (providers like Ollama, OpenAI, OpenRouter will validate the model themselves)
+      return requestedModel;
+    };
+
+    const model = resolveModelForProviderLocal(
+      config.authType ?? AuthType.USE_GEMINI,
       gcConfig.getModel(),
-      gcConfig.getPreviewFeatures(),
+      gcConfig.getPreviewFeatures() ?? false,
     );
     const customHeadersEnv =
       process.env['GEMINI_CLI_CUSTOM_HEADERS'] || undefined;
@@ -234,7 +258,10 @@ export async function createContentGenerator(
       return new LoggingContentGenerator(googleAdapter, gcConfig);
     }
 
-    if (config.authType === AuthType.USE_OPENAI) {
+    if (
+      config.authType === AuthType.USE_OPENAI ||
+      config.authType === AuthType.OPENAI
+    ) {
       const openaiAdapter = new OpenAIContentGenerator({
         apiKey: config.apiKey,
         baseUrl: config.baseUrl,
@@ -242,7 +269,10 @@ export async function createContentGenerator(
       return new LoggingContentGenerator(openaiAdapter, gcConfig);
     }
 
-    if (config.authType === AuthType.USE_OPENROUTER) {
+    if (
+      config.authType === AuthType.USE_OPENROUTER ||
+      config.authType === AuthType.OPENROUTER
+    ) {
       const openrouterAdapter = new OpenRouterContentGenerator({
         apiKey: config.apiKey,
         baseUrl: config.baseUrl,
@@ -250,7 +280,10 @@ export async function createContentGenerator(
       return new LoggingContentGenerator(openrouterAdapter, gcConfig);
     }
 
-    if (config.authType === AuthType.USE_OLLAMA) {
+    if (
+      config.authType === AuthType.USE_OLLAMA ||
+      config.authType === AuthType.OLLAMA
+    ) {
       const ollamaAdapter = new OllamaContentGenerator({
         baseUrl: config.baseUrl,
       });

@@ -18,6 +18,8 @@ import {
   ModelSlashCommandEvent,
   logModelSlashCommand,
   getDisplayString,
+  AuthType,
+  getModelsForProvider,
 } from '@google/gemini-cli-core';
 import { useKeypress } from '../hooks/useKeypress.js';
 import { theme } from '../semantic-colors.js';
@@ -71,6 +73,31 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
   );
 
   const mainOptions = useMemo(() => {
+    const authType = config?.getContentGeneratorConfig?.()?.authType; // Get the current auth type
+
+    // If using a non-Gemini provider, simplify the main options
+    if (
+      authType &&
+      authType !== AuthType.USE_GEMINI &&
+      authType !== AuthType.USE_VERTEX_AI &&
+      authType !== AuthType.LOGIN_WITH_GOOGLE &&
+      authType !== AuthType.LEGACY_CLOUD_SHELL &&
+      authType !== AuthType.COMPUTE_ADC
+    ) {
+      // For non-Gemini providers, just offer Manual selection
+      return [
+        {
+          value: 'Manual',
+          title: manualModelSelected
+            ? `Manual (${manualModelSelected})`
+            : 'Manual',
+          description: 'Manually select a model',
+          key: 'Manual',
+        },
+      ];
+    }
+
+    // Otherwise, show Gemini models (original behavior)
     const list = [
       {
         value: DEFAULT_GEMINI_MODEL_AUTO,
@@ -99,9 +126,29 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
       });
     }
     return list;
-  }, [shouldShowPreviewModels, manualModelSelected]);
+  }, [shouldShowPreviewModels, manualModelSelected, config]);
 
   const manualOptions = useMemo(() => {
+    const authType = config?.getContentGeneratorConfig?.()?.authType; // Get the current auth type
+
+    // If using a non-Gemini provider, show provider-specific models
+    if (
+      authType &&
+      authType !== AuthType.USE_GEMINI &&
+      authType !== AuthType.USE_VERTEX_AI &&
+      authType !== AuthType.LOGIN_WITH_GOOGLE &&
+      authType !== AuthType.LEGACY_CLOUD_SHELL &&
+      authType !== AuthType.COMPUTE_ADC
+    ) {
+      const providerModels = getModelsForProvider(authType);
+      return providerModels.map((model) => ({
+        value: model,
+        title: model,
+        key: model,
+      }));
+    }
+
+    // Otherwise, show Gemini models (original behavior)
     const list = [
       {
         value: DEFAULT_GEMINI_MODEL,
@@ -135,7 +182,7 @@ export function ModelDialog({ onClose }: ModelDialogProps): React.JSX.Element {
       );
     }
     return list;
-  }, [shouldShowPreviewModels]);
+  }, [shouldShowPreviewModels, config]);
 
   const options = view === 'main' ? mainOptions : manualOptions;
 
