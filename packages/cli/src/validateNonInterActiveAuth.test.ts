@@ -36,6 +36,9 @@ describe('validateNonInterActiveAuth', () => {
   let originalEnvGeminiApiKey: string | undefined;
   let originalEnvVertexAi: string | undefined;
   let originalEnvGcp: string | undefined;
+  let originalEnvOpenAiApiKey: string | undefined;
+  let originalEnvOpenRouterApiKey: string | undefined;
+  let originalEnvOllamaHost: string | undefined;
   let debugLoggerErrorSpy: ReturnType<typeof vi.spyOn>;
   let coreEventsEmitFeedbackSpy: MockInstance;
   let processExitSpy: MockInstance;
@@ -45,9 +48,15 @@ describe('validateNonInterActiveAuth', () => {
     originalEnvGeminiApiKey = process.env['GEMINI_API_KEY'];
     originalEnvVertexAi = process.env['GOOGLE_GENAI_USE_VERTEXAI'];
     originalEnvGcp = process.env['GOOGLE_GENAI_USE_GCA'];
+    originalEnvOpenAiApiKey = process.env['OPENAI_API_KEY'];
+    originalEnvOpenRouterApiKey = process.env['OPENROUTER_API_KEY'];
+    originalEnvOllamaHost = process.env['OLLAMA_HOST'];
     delete process.env['GEMINI_API_KEY'];
     delete process.env['GOOGLE_GENAI_USE_VERTEXAI'];
     delete process.env['GOOGLE_GENAI_USE_GCA'];
+    delete process.env['OPENAI_API_KEY'];
+    delete process.env['OPENROUTER_API_KEY'];
+    delete process.env['OLLAMA_HOST'];
     debugLoggerErrorSpy = vi
       .spyOn(debugLogger, 'error')
       .mockImplementation(() => {});
@@ -97,6 +106,21 @@ describe('validateNonInterActiveAuth', () => {
     } else {
       delete process.env['GOOGLE_GENAI_USE_GCA'];
     }
+    if (originalEnvOpenAiApiKey !== undefined) {
+      process.env['OPENAI_API_KEY'] = originalEnvOpenAiApiKey;
+    } else {
+      delete process.env['OPENAI_API_KEY'];
+    }
+    if (originalEnvOpenRouterApiKey !== undefined) {
+      process.env['OPENROUTER_API_KEY'] = originalEnvOpenRouterApiKey;
+    } else {
+      delete process.env['OPENROUTER_API_KEY'];
+    }
+    if (originalEnvOllamaHost !== undefined) {
+      process.env['OLLAMA_HOST'] = originalEnvOllamaHost;
+    } else {
+      delete process.env['OLLAMA_HOST'];
+    }
     vi.restoreAllMocks();
   });
 
@@ -121,7 +145,9 @@ describe('validateNonInterActiveAuth', () => {
       );
     }
     expect(debugLoggerErrorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Please set an Auth method'),
+      expect.stringContaining(
+        'Please set an Auth method in your',
+      ),
     );
     expect(processExitSpy).toHaveBeenCalledWith(
       ExitCodes.FATAL_AUTHENTICATION_ERROR,
@@ -143,6 +169,45 @@ describe('validateNonInterActiveAuth', () => {
 
   it('uses USE_GEMINI if GEMINI_API_KEY is set', async () => {
     process.env['GEMINI_API_KEY'] = 'fake-key';
+    const nonInteractiveConfig = createLocalMockConfig({});
+    await validateNonInteractiveAuth(
+      undefined,
+      undefined,
+      nonInteractiveConfig,
+      mockSettings,
+    );
+    expect(processExitSpy).not.toHaveBeenCalled();
+    expect(debugLoggerErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it('uses USE_OPENAI if OPENAI_API_KEY is set', async () => {
+    process.env['OPENAI_API_KEY'] = 'openai-key';
+    const nonInteractiveConfig = createLocalMockConfig({});
+    await validateNonInteractiveAuth(
+      undefined,
+      undefined,
+      nonInteractiveConfig,
+      mockSettings,
+    );
+    expect(processExitSpy).not.toHaveBeenCalled();
+    expect(debugLoggerErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it('uses USE_OPENROUTER if OPENROUTER_API_KEY is set', async () => {
+    process.env['OPENROUTER_API_KEY'] = 'openrouter-key';
+    const nonInteractiveConfig = createLocalMockConfig({});
+    await validateNonInteractiveAuth(
+      undefined,
+      undefined,
+      nonInteractiveConfig,
+      mockSettings,
+    );
+    expect(processExitSpy).not.toHaveBeenCalled();
+    expect(debugLoggerErrorSpy).not.toHaveBeenCalled();
+  });
+
+  it('uses USE_OLLAMA if OLLAMA_HOST is set', async () => {
+    process.env['OLLAMA_HOST'] = 'http://localhost:11434';
     const nonInteractiveConfig = createLocalMockConfig({});
     await validateNonInteractiveAuth(
       undefined,

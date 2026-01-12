@@ -42,6 +42,7 @@ describe('useAuth', () => {
     vi.resetAllMocks();
     delete process.env['GEMINI_API_KEY'];
     delete process.env['GEMINI_DEFAULT_AUTH_TYPE'];
+    delete process.env['OPENAI_API_KEY'];
   });
 
   afterEach(() => {
@@ -119,6 +120,24 @@ describe('useAuth', () => {
       expect(mockValidateAuthMethod).toHaveBeenCalledWith(
         AuthType.LOGIN_WITH_GOOGLE,
       );
+    });
+
+    it('should call validateAuthMethod for OpenAI auth types', () => {
+      const settings = {
+        merged: {
+          security: {
+            auth: {},
+          },
+        },
+      } as LoadedSettings;
+
+      mockValidateAuthMethod.mockReturnValue('Validation Error');
+      const error = validateAuthMethodWithSettings(
+        AuthType.USE_OPENAI,
+        settings,
+      );
+      expect(error).toBe('Validation Error');
+      expect(mockValidateAuthMethod).toHaveBeenCalledWith(AuthType.USE_OPENAI);
     });
   });
 
@@ -265,6 +284,21 @@ describe('useAuth', () => {
       await waitFor(() => {
         expect(mockConfig.refreshAuth).toHaveBeenCalledWith(
           AuthType.LOGIN_WITH_GOOGLE,
+        );
+        expect(result.current.authState).toBe(AuthState.Authenticated);
+        expect(result.current.authError).toBeNull();
+      });
+    });
+
+    it('should authenticate successfully for OpenAI when env key is available', async () => {
+      process.env['OPENAI_API_KEY'] = 'openai-env-key';
+      const { result } = renderHook(() =>
+        useAuthCommand(createSettings(AuthType.USE_OPENAI), mockConfig),
+      );
+
+      await waitFor(() => {
+        expect(mockConfig.refreshAuth).toHaveBeenCalledWith(
+          AuthType.USE_OPENAI,
         );
         expect(result.current.authState).toBe(AuthState.Authenticated);
         expect(result.current.authError).toBeNull();

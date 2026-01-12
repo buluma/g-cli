@@ -70,6 +70,21 @@ export function AuthDialog({
       key: AuthType.USE_GEMINI,
     },
     {
+      label: 'OpenAI API Key',
+      value: AuthType.USE_OPENAI,
+      key: AuthType.USE_OPENAI,
+    },
+    {
+      label: 'OpenRouter API Key',
+      value: AuthType.USE_OPENROUTER,
+      key: AuthType.USE_OPENROUTER,
+    },
+    {
+      label: 'Ollama',
+      value: AuthType.USE_OLLAMA,
+      key: AuthType.USE_OLLAMA,
+    },
+    {
       label: 'Vertex AI',
       value: AuthType.USE_VERTEX_AI,
       key: AuthType.USE_VERTEX_AI,

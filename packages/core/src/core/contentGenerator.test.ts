@@ -18,6 +18,7 @@ import { LoggingContentGenerator } from './loggingContentGenerator.js';
 import { loadApiKey } from './apiKeyCredentialStorage.js';
 import { FakeContentGenerator } from './fakeContentGenerator.js';
 import { RecordingContentGenerator } from './recordingContentGenerator.js';
+import { createOpenAiCompatibleContentGenerator } from './openAiContentGenerator.js';
 
 vi.mock('../code_assist/codeAssist.js');
 vi.mock('@google/genai');
@@ -26,6 +27,7 @@ vi.mock('./apiKeyCredentialStorage.js', () => ({
 }));
 
 vi.mock('./fakeContentGenerator.js');
+vi.mock('./openAiContentGenerator.js');
 
 const mockConfig = {
   getModel: vi.fn().mockReturnValue('gemini-pro'),
@@ -338,6 +340,47 @@ describe('createContentGenerator', () => {
       new LoggingContentGenerator(mockGenerator.models, mockConfig),
     );
   });
+
+  it.each([
+    {
+      authType: AuthType.USE_OPENAI,
+      provider: 'openai',
+      config: { authType: AuthType.USE_OPENAI, apiKey: 'openai-key' },
+    },
+    {
+      authType: AuthType.USE_OPENROUTER,
+      provider: 'openrouter',
+      config: { authType: AuthType.USE_OPENROUTER, apiKey: 'openrouter-key' },
+    },
+    {
+      authType: AuthType.USE_OLLAMA,
+      provider: 'ollama',
+      config: {
+        authType: AuthType.USE_OLLAMA,
+        baseUrl: 'http://localhost:11434',
+      },
+    },
+  ])(
+    'should create an OpenAI-compatible content generator for $authType',
+    async ({ provider, config }) => {
+      const mockGenerator = {} as unknown as ContentGenerator;
+      vi.mocked(createOpenAiCompatibleContentGenerator).mockResolvedValue(
+        mockGenerator as never,
+      );
+
+      const generator = await createContentGenerator(config, mockConfig);
+
+      expect(createOpenAiCompatibleContentGenerator).toHaveBeenCalledWith(
+        provider,
+        config,
+        mockConfig,
+        undefined,
+      );
+      expect(generator).toEqual(
+        new LoggingContentGenerator(mockGenerator, mockConfig),
+      );
+    },
+  );
 });
 
 describe('createContentGeneratorConfig', () => {
@@ -421,5 +464,59 @@ describe('createContentGeneratorConfig', () => {
     );
     expect(config.apiKey).toBeUndefined();
     expect(config.vertexai).toBeUndefined();
+  });
+
+  it('should configure for OpenAI using OPENAI_API_KEY when set', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'env-openai-key');
+    const config = await createContentGeneratorConfig(
+      mockConfig,
+      AuthType.USE_OPENAI,
+    );
+    expect(config.apiKey).toBe('env-openai-key');
+  });
+
+  it('should not configure for OpenAI if OPENAI_API_KEY is empty', async () => {
+    vi.stubEnv('OPENAI_API_KEY', '');
+    const config = await createContentGeneratorConfig(
+      mockConfig,
+      AuthType.USE_OPENAI,
+    );
+    expect(config.apiKey).toBeUndefined();
+  });
+
+  it('should configure for OpenRouter using OPENROUTER_API_KEY when set', async () => {
+    vi.stubEnv('OPENROUTER_API_KEY', 'env-openrouter-key');
+    const config = await createContentGeneratorConfig(
+      mockConfig,
+      AuthType.USE_OPENROUTER,
+    );
+    expect(config.apiKey).toBe('env-openrouter-key');
+  });
+
+  it('should not configure for OpenRouter if OPENROUTER_API_KEY is empty', async () => {
+    vi.stubEnv('OPENROUTER_API_KEY', '');
+    const config = await createContentGeneratorConfig(
+      mockConfig,
+      AuthType.USE_OPENROUTER,
+    );
+    expect(config.apiKey).toBeUndefined();
+  });
+
+  it('should configure for Ollama using OLLAMA_HOST when set', async () => {
+    vi.stubEnv('OLLAMA_HOST', 'http://localhost:11434');
+    const config = await createContentGeneratorConfig(
+      mockConfig,
+      AuthType.USE_OLLAMA,
+    );
+    expect(config.baseUrl).toBe('http://localhost:11434');
+  });
+
+  it('should not configure for Ollama if OLLAMA_HOST is empty', async () => {
+    vi.stubEnv('OLLAMA_HOST', '');
+    const config = await createContentGeneratorConfig(
+      mockConfig,
+      AuthType.USE_OLLAMA,
+    );
+    expect(config.baseUrl).toBeUndefined();
   });
 });

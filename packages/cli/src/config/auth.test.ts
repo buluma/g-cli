@@ -21,6 +21,9 @@ describe('validateAuthMethod', () => {
     vi.stubEnv('GOOGLE_CLOUD_PROJECT', undefined);
     vi.stubEnv('GOOGLE_CLOUD_LOCATION', undefined);
     vi.stubEnv('GOOGLE_API_KEY', undefined);
+    vi.stubEnv('OPENAI_API_KEY', undefined);
+    vi.stubEnv('OPENROUTER_API_KEY', undefined);
+    vi.stubEnv('OLLAMA_HOST', undefined);
   });
 
   afterEach(() => {
@@ -53,6 +56,53 @@ describe('validateAuthMethod', () => {
       envs: {},
       expected:
         'When using Gemini API, you must specify the GEMINI_API_KEY environment variable.\n' +
+        'Update your environment and try again (no reload needed if using .env)!',
+    },
+    {
+      description:
+        'should return null for USE_OPENAI if OPENAI_API_KEY is set',
+      authType: AuthType.USE_OPENAI,
+      envs: { OPENAI_API_KEY: 'test-openai-key' },
+      expected: null,
+    },
+    {
+      description:
+        'should return an error message for USE_OPENAI if OPENAI_API_KEY is not set',
+      authType: AuthType.USE_OPENAI,
+      envs: {},
+      expected:
+        'When using OpenAI, you must specify the OPENAI_API_KEY environment variable.\n' +
+        'Update your environment and try again (no reload needed if using .env)!',
+    },
+    {
+      description:
+        'should return null for USE_OPENROUTER if OPENROUTER_API_KEY is set',
+      authType: AuthType.USE_OPENROUTER,
+      envs: { OPENROUTER_API_KEY: 'test-openrouter-key' },
+      expected: null,
+    },
+    {
+      description:
+        'should return an error message for USE_OPENROUTER if OPENROUTER_API_KEY is not set',
+      authType: AuthType.USE_OPENROUTER,
+      envs: {},
+      expected:
+        'When using OpenRouter, you must specify the OPENROUTER_API_KEY environment variable.\n' +
+        'Update your environment and try again (no reload needed if using .env)!',
+    },
+    {
+      description: 'should return null for USE_OLLAMA if OLLAMA_HOST is set',
+      authType: AuthType.USE_OLLAMA,
+      envs: { OLLAMA_HOST: 'http://localhost:11434' },
+      expected: null,
+    },
+    {
+      description:
+        'should return an error message for USE_OLLAMA if OLLAMA_HOST is not set',
+      authType: AuthType.USE_OLLAMA,
+      envs: {},
+      expected:
+        'When using Ollama, you must specify the OLLAMA_HOST environment variable.\n' +
         'Update your environment and try again (no reload needed if using .env)!',
     },
     {

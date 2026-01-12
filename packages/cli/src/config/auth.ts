@@ -26,6 +26,36 @@ export function validateAuthMethod(authMethod: string): string | null {
     return null;
   }
 
+  if (authMethod === AuthType.USE_OPENAI) {
+    if (!process.env['OPENAI_API_KEY']) {
+      return (
+        'When using OpenAI, you must specify the OPENAI_API_KEY environment variable.\n' +
+        'Update your environment and try again (no reload needed if using .env)!'
+      );
+    }
+    return null;
+  }
+
+  if (authMethod === AuthType.USE_OPENROUTER) {
+    if (!process.env['OPENROUTER_API_KEY']) {
+      return (
+        'When using OpenRouter, you must specify the OPENROUTER_API_KEY environment variable.\n' +
+        'Update your environment and try again (no reload needed if using .env)!'
+      );
+    }
+    return null;
+  }
+
+  if (authMethod === AuthType.USE_OLLAMA) {
+    if (!process.env['OLLAMA_HOST']) {
+      return (
+        'When using Ollama, you must specify the OLLAMA_HOST environment variable.\n' +
+        'Update your environment and try again (no reload needed if using .env)!'
+      );
+    }
+    return null;
+  }
+
   if (authMethod === AuthType.USE_VERTEX_AI) {
     const hasVertexProjectLocationConfig =
       !!process.env['GOOGLE_CLOUD_PROJECT'] &&

@@ -18,10 +18,13 @@ import {
   MemoryMetricType,
   ToolExecutionPhase,
   ApiRequestPhase,
+  GenAiProviderName,
+  getConventionAttributes,
 } from './metrics.js';
 import { makeFakeConfig } from '../test-utils/config.js';
 import { ModelRoutingEvent, AgentFinishEvent } from './types.js';
 import { AgentTerminateMode } from '../agents/types.js';
+import { AuthType } from '../core/contentGenerator.js';
 
 const mockCounterAddFn: Mock<
   (value: number, attributes?: Attributes, context?: Context) => void
@@ -579,6 +582,38 @@ describe('Telemetry Metrics', () => {
       getSessionId: () => 'test-session-id',
       getTelemetryEnabled: () => true,
     } as unknown as Config;
+
+    describe('getConventionAttributes', () => {
+      it.each([
+        {
+          authType: AuthType.USE_OPENAI,
+          expectedProvider: GenAiProviderName.OPENAI,
+        },
+        {
+          authType: AuthType.USE_OPENROUTER,
+          expectedProvider: GenAiProviderName.OPENROUTER,
+        },
+        {
+          authType: AuthType.USE_OLLAMA,
+          expectedProvider: GenAiProviderName.OLLAMA,
+        },
+      ])(
+        'maps $authType to $expectedProvider',
+        ({ authType, expectedProvider }) => {
+          const attributes = getConventionAttributes({
+            model: 'test-model',
+            auth_type: authType,
+          });
+
+          expect(attributes).toEqual({
+            'gen_ai.operation.name': 'generate_content',
+            'gen_ai.provider.name': expectedProvider,
+            'gen_ai.request.model': 'test-model',
+            'gen_ai.response.model': 'test-model',
+          });
+        },
+      );
+    });
 
     describe('recordGenAiClientTokenUsage', () => {
       it('should not record metrics when not initialized', () => {

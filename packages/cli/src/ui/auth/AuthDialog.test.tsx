@@ -149,6 +149,26 @@ describe('AuthDialog', () => {
     );
   });
 
+  it('includes OpenAI, OpenRouter, and Ollama auth options', () => {
+    renderWithProviders(<AuthDialog {...props} />);
+    const items = mockedRadioButtonSelect.mock.calls[0][0].items;
+    expect(items).toContainEqual({
+      label: 'OpenAI API Key',
+      value: AuthType.USE_OPENAI,
+      key: AuthType.USE_OPENAI,
+    });
+    expect(items).toContainEqual({
+      label: 'OpenRouter API Key',
+      value: AuthType.USE_OPENROUTER,
+      key: AuthType.USE_OPENROUTER,
+    });
+    expect(items).toContainEqual({
+      label: 'Ollama',
+      value: AuthType.USE_OLLAMA,
+      key: AuthType.USE_OLLAMA,
+    });
+  });
+
   it('filters auth types when enforcedType is set', () => {
     props.settings.merged.security!.auth!.enforcedType = AuthType.USE_GEMINI;
     renderWithProviders(<AuthDialog {...props} />);
@@ -173,6 +193,14 @@ describe('AuthDialog', () => {
         },
         expected: AuthType.USE_VERTEX_AI,
         desc: 'from settings',
+      },
+      {
+        setup: () => {
+          props.settings.merged.security!.auth!.selectedType =
+            AuthType.USE_OPENROUTER;
+        },
+        expected: AuthType.USE_OPENROUTER,
+        desc: 'from settings for OpenRouter',
       },
       {
         setup: () => {
