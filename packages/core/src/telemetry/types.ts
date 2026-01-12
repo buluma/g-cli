@@ -79,11 +79,16 @@ export class StartSessionEvent implements BaseTelemetryEvent {
     const mcpServers =
       config.getMcpClientManager()?.getMcpServers() ?? config.getMcpServers();
 
+    const nonGoogleApiKeyAuthTypes = new Set(['openai', 'openrouter', 'ollama']);
     let useGemini = false;
     let useVertex = false;
+    let useNonGoogleApiKey = false;
     if (generatorConfig && generatorConfig.authType) {
       useGemini = generatorConfig.authType === AuthType.USE_GEMINI;
       useVertex = generatorConfig.authType === AuthType.USE_VERTEX_AI;
+      useNonGoogleApiKey = nonGoogleApiKeyAuthTypes.has(
+        generatorConfig.authType.toLowerCase(),
+      );
     }
 
     this['event.name'] = 'cli_config';
@@ -94,7 +99,7 @@ export class StartSessionEvent implements BaseTelemetryEvent {
       typeof config.getSandbox() === 'string' || !!config.getSandbox();
     this.core_tools_enabled = (config.getCoreTools() ?? []).join(',');
     this.approval_mode = config.getApprovalMode();
-    this.api_key_enabled = useGemini || useVertex;
+    this.api_key_enabled = useGemini || useVertex || useNonGoogleApiKey;
     this.vertex_ai_enabled = useVertex;
     this.debug_enabled = config.getDebugMode();
     this.mcp_servers = mcpServers ? Object.keys(mcpServers).join(',') : '';

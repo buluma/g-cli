@@ -91,6 +91,7 @@ describe('Telemetry Metrics', () => {
   let recordBaselineComparisonModule: typeof import('./metrics.js').recordBaselineComparison;
   let recordGenAiClientTokenUsageModule: typeof import('./metrics.js').recordGenAiClientTokenUsage;
   let recordGenAiClientOperationDurationModule: typeof import('./metrics.js').recordGenAiClientOperationDuration;
+  let getConventionAttributesModule: typeof import('./metrics.js').getConventionAttributes;
   let recordFlickerFrameModule: typeof import('./metrics.js').recordFlickerFrame;
   let recordExitFailModule: typeof import('./metrics.js').recordExitFail;
   let recordAgentRunMetricsModule: typeof import('./metrics.js').recordAgentRunMetrics;
@@ -135,6 +136,7 @@ describe('Telemetry Metrics', () => {
       metricsJsModule.recordGenAiClientTokenUsage;
     recordGenAiClientOperationDurationModule =
       metricsJsModule.recordGenAiClientOperationDuration;
+    getConventionAttributesModule = metricsJsModule.getConventionAttributes;
     recordFlickerFrameModule = metricsJsModule.recordFlickerFrame;
     recordExitFailModule = metricsJsModule.recordExitFail;
     recordAgentRunMetricsModule = metricsJsModule.recordAgentRunMetrics;
@@ -579,6 +581,29 @@ describe('Telemetry Metrics', () => {
       getSessionId: () => 'test-session-id',
       getTelemetryEnabled: () => true,
     } as unknown as Config;
+
+    describe('getConventionAttributes', () => {
+      it.each([
+        ['openai', 'openai'],
+        ['openrouter', 'openrouter'],
+        ['ollama', 'ollama'],
+      ])(
+        'maps auth type %s to provider %s',
+        (authType, expectedProvider) => {
+          const attributes = getConventionAttributesModule({
+            model: 'test-model',
+            auth_type: authType,
+          });
+
+          expect(attributes).toEqual({
+            'gen_ai.operation.name': 'generate_content',
+            'gen_ai.provider.name': expectedProvider,
+            'gen_ai.request.model': 'test-model',
+            'gen_ai.response.model': 'test-model',
+          });
+        },
+      );
+    });
 
     describe('recordGenAiClientTokenUsage', () => {
       it('should not record metrics when not initialized', () => {
