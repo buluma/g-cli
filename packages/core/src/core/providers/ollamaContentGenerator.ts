@@ -120,12 +120,19 @@ function toOllamaMessages(
   const contentArray = toContents(request.contents);
   for (const entry of contentArray) {
     messages.push({
-      role: entry.role ?? 'user',
+      role: toOllamaRole(entry.role),
       content: partsToText(entry.parts ?? []),
     });
   }
 
   return messages;
+}
+
+function toOllamaRole(role?: string): string {
+  if (role === 'model') {
+    return 'assistant';
+  }
+  return role ?? 'user';
 }
 
 function partsToText(parts: Part[] | string[]): string {
@@ -156,7 +163,7 @@ function toGenerateContentResponse(response: OllamaResponse): GenerateContentRes
     ? [
         {
           content: {
-            role: response.message?.role ?? 'model',
+            role: normalizeOllamaResponseRole(response.message?.role),
             parts: [{ text }],
           },
         },
@@ -175,6 +182,13 @@ function toGenerateContentResponse(response: OllamaResponse): GenerateContentRes
         }
       : undefined;
   return out;
+}
+
+function normalizeOllamaResponseRole(role?: string): string {
+  if (role === 'assistant') {
+    return 'model';
+  }
+  return role ?? 'model';
 }
 
 async function* streamOllamaResponse(
@@ -215,7 +229,7 @@ async function* streamOllamaResponse(
       chunk.candidates = [
         {
           content: {
-            role: parsed.message.role ?? 'model',
+            role: normalizeOllamaResponseRole(parsed.message.role),
             parts: [{ text: parsed.message.content }],
           },
         },

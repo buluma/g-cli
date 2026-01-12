@@ -162,12 +162,19 @@ function toOpenAIMessages(
   const contentArray = toContents(request.contents);
   for (const entry of contentArray) {
     messages.push({
-      role: entry.role ?? 'user',
+      role: toOpenAIRole(entry.role),
       content: partsToText(entry.parts ?? []),
     });
   }
 
   return messages;
+}
+
+function toOpenAIRole(role?: string): string {
+  if (role === 'model') {
+    return 'assistant';
+  }
+  return role ?? 'user';
 }
 
 function partsToText(parts: Part[] | string[]): string {
